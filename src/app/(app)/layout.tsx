@@ -56,7 +56,9 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
     <div className="flex min-h-screen">
       <aside className="flex w-60 flex-none flex-col border-r border-border bg-surface px-4 py-6">
         <div className="mb-8 flex items-center gap-2 px-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-semibold text-white">LMS</div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-gradient-a to-gradient-b text-sm font-semibold text-white shadow-sm shadow-accent/30">
+            LMS
+          </div>
           <span className="font-display text-base font-medium text-ink">Nền tảng LMS</span>
         </div>
 
@@ -67,7 +69,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
               <Link
                 key={href}
                 href={href}
-                className={`relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active ? "text-accent-strong" : "text-ink-muted hover:bg-surface-2 hover:text-ink"
                 }`}
               >
@@ -78,7 +80,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
                     transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}
-                <Icon className="relative h-4 w-4" strokeWidth={1.75} />
+                <Icon className="relative h-4 w-4 transition-transform duration-150 group-hover:scale-110" strokeWidth={1.75} />
                 <span className="relative">{label}</span>
               </Link>
             );
@@ -87,7 +89,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
 
         <div className="border-t border-border pt-4">
           <div className="flex items-center gap-2 px-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 font-display text-sm font-medium text-ink">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-gradient-a to-gradient-b font-display text-sm font-medium text-white">
               {user.fullName.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">

@@ -1,20 +1,47 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { CheckCircle2, Users2 } from "lucide-react";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function HeroVisual() {
   const reduce = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [8, -8]), { stiffness: 150, damping: 20 });
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), { stiffness: 150, damping: 20 });
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (reduce || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+  }
+
+  function handleMouseLeave() {
+    mouseX.set(0);
+    mouseY.set(0);
+  }
 
   return (
-    <div className="relative mx-auto w-full max-w-sm">
+    <div className="relative mx-auto w-full max-w-sm" style={{ perspective: 1000 }}>
+      <div className="pointer-events-none absolute -inset-10 -z-10">
+        <div className="animate-blob absolute left-1/2 top-1/3 h-56 w-56 -translate-x-1/2 rounded-full bg-gradient-to-br from-gradient-a/30 via-gradient-b/20 to-gradient-c/25 blur-3xl" />
+      </div>
+
       <motion.div
-        initial={reduce ? false : { opacity: 0, y: 24, rotate: -1 }}
-        animate={{ opacity: 1, y: 0, rotate: -1 }}
+        ref={ref}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={reduce ? undefined : ({ rotateX, rotateY, transformStyle: "preserve-3d" } as Record<string, MotionValue | string>)}
+        initial={reduce ? false : { opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: EASE }}
-        className="rounded-2xl border border-border bg-surface p-5 shadow-sm"
+        className="rounded-2xl border border-border bg-surface p-5 shadow-lg shadow-accent/10"
       >
         <div className="flex items-center justify-between">
           <div>
@@ -29,11 +56,11 @@ export function HeroVisual() {
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-surface-2 p-3">
             <p className="text-xs text-ink-muted">Điểm trung bình</p>
-            <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-ink">8.4</p>
+            <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-accent-strong">8.4</p>
           </div>
           <div className="rounded-xl bg-surface-2 p-3">
             <p className="text-xs text-ink-muted">Bài đã chấm</p>
-            <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-ink">27/32</p>
+            <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-role-admin">27/32</p>
           </div>
         </div>
 
@@ -42,9 +69,9 @@ export function HeroVisual() {
             <span>Tiến độ chấm bài</span>
             <span className="tabular-nums">84%</span>
           </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-2">
             <motion.div
-              className="h-full rounded-full bg-accent"
+              className="h-full rounded-full bg-gradient-to-r from-gradient-a via-gradient-a to-gradient-b"
               initial={reduce ? { width: "84%" } : { width: 0 }}
               animate={{ width: "84%" }}
               transition={{ duration: 1, delay: 0.4, ease: EASE }}

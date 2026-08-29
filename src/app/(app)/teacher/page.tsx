@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronRight, PlusCircle, UserPlus, Users2 } from "lucide-react";
+import { ChevronRight, GraduationCap, PlusCircle, UserPlus, Users2 } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { StatCard } from "@/components/ui/stat-card";
@@ -75,10 +75,10 @@ export default function TeacherPage() {
       ) : (
         <StaggerGroup className="grid gap-4 sm:grid-cols-2">
           <StaggerItem>
-            <StatCard label="Lớp học" value={classes?.length ?? 0} accent="role-teacher" hint="đang hoạt động" />
+            <StatCard label="Lớp học" value={classes?.length ?? 0} accent="role-teacher" hint="đang hoạt động" icon={GraduationCap} />
           </StaggerItem>
           <StaggerItem>
-            <StatCard label="Thành viên" value={members?.length ?? 0} accent="role-admin" hint="giáo viên & học sinh" />
+            <StatCard label="Thành viên" value={members?.length ?? 0} accent="role-admin" hint="giáo viên & học sinh" icon={Users2} />
           </StaggerItem>
         </StaggerGroup>
       )}
@@ -163,12 +163,15 @@ export default function TeacherPage() {
         ) : (
           <StaggerGroup className="flex flex-col gap-2">
             {classes.map((c) => (
-              <StaggerItem key={c._id}>
+              <StaggerItem key={c._id} hoverLift>
                 <Link
                   href={`/teacher/classes/${c._id}`}
-                  className="flex items-center justify-between rounded-xl border border-border bg-surface px-5 py-4 transition-all duration-150 hover:border-accent active:scale-[0.99]"
+                  className="flex items-center gap-4 rounded-xl border border-border bg-surface px-5 py-4 shadow-sm transition-all duration-150 hover:border-accent hover:shadow-md active:scale-[0.99]"
                 >
-                  <div>
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-role-teacher-soft text-role-teacher">
+                    <GraduationCap className="h-5 w-5" strokeWidth={1.75} />
+                  </span>
+                  <div className="flex-1">
                     <p className="font-display text-base font-medium text-ink">{c.name}</p>
                     <p className="text-sm text-ink-muted">{c.subject ?? "-"} · {c.academicYear}</p>
                   </div>

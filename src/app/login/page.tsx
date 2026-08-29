@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import { GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
@@ -13,6 +14,7 @@ import { Field, Input } from "@/components/ui/field";
 export default function LoginPage() {
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
+  const reduce = useReducedMotion();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,14 +35,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-6">
+      <div className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
+        <div className="animate-blob h-[28rem] w-[28rem] rounded-full bg-gradient-to-br from-gradient-a/25 via-gradient-b/15 to-gradient-c/20 blur-[90px]" />
+      </div>
+
+      <motion.div
+        initial={reduce ? false : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-sm rounded-2xl border border-border bg-surface/80 p-8 shadow-xl shadow-accent/10 backdrop-blur-sm"
+      >
         <div className="mb-8 flex flex-col items-center gap-2 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-white">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-gradient-a to-gradient-b text-white shadow-md shadow-accent/30">
             <GraduationCap className="h-5 w-5" />
           </div>
           <h1 className="font-display text-2xl font-semibold text-ink">Đăng nhập</h1>
-          <p className="text-sm text-ink-muted">Dành cho CSGD, giáo viên và học sinh</p>
+          <p className="text-sm text-ink-muted">Dành cho giáo viên và học sinh</p>
         </div>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
@@ -61,7 +72,7 @@ export default function LoginPage() {
             Đăng ký CSGD
           </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

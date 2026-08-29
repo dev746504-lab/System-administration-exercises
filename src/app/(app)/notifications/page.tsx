@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bell, Send } from "lucide-react";
+import { Award, Bell, ClipboardCheck, Megaphone, Send, Settings } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 
 const typeLabel: Record<string, string> = { announcement: "Thông báo", assignment: "Bài tập", grade: "Điểm số", system: "Hệ thống" };
+const typeChip: Record<string, { icon: typeof Bell; soft: string; text: string }> = {
+  announcement: { icon: Megaphone, soft: "bg-accent-soft", text: "text-accent-strong" },
+  assignment: { icon: ClipboardCheck, soft: "bg-role-admin-soft", text: "text-role-admin" },
+  grade: { icon: Award, soft: "bg-role-student-soft", text: "text-role-student" },
+  system: { icon: Settings, soft: "bg-surface-2", text: "text-ink-muted" },
+};
 
 export default function NotificationsPage() {
   const { user } = useAuthStore();
@@ -117,20 +123,28 @@ export default function NotificationsPage() {
         <StaggerGroup className="flex flex-col gap-2">
           {notifications.map((n) => {
             const read = n.readBy.some((r) => r.userId === user?.id);
+            const chip = typeChip[n.type] ?? typeChip.announcement;
+            const ChipIcon = chip.icon;
             return (
-              <StaggerItem key={n._id}>
+              <StaggerItem key={n._id} hoverLift>
                 <button
                   onClick={() => !read && markRead.mutate(n._id)}
-                  className={`flex w-full flex-col items-start gap-1 rounded-xl border px-4 py-3 text-left transition-all duration-150 active:scale-[0.99] ${
+                  className={`flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left shadow-sm transition-all duration-150 hover:shadow-md active:scale-[0.99] ${
                     read ? "border-border bg-surface" : "border-accent bg-accent-soft"
                   }`}
                 >
-                  <div className="flex w-full items-center justify-between">
-                    <span className="text-sm font-semibold text-ink">{n.title}</span>
-                    <span className="text-xs text-ink-muted">{typeLabel[n.type] ?? n.type}</span>
+                  <span className={`relative flex h-9 w-9 flex-none items-center justify-center rounded-full ${chip.soft} ${chip.text}`}>
+                    <ChipIcon className="h-4 w-4" strokeWidth={1.75} />
+                    {!read && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full bg-danger ring-2 ring-surface" />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex w-full items-center justify-between gap-2">
+                      <span className="text-sm font-semibold text-ink">{n.title}</span>
+                      <span className="flex-none text-xs text-ink-muted">{typeLabel[n.type] ?? n.type}</span>
+                    </div>
+                    <p className="text-sm text-ink-muted">{n.content}</p>
+                    <span className="text-xs text-ink-muted">{new Date(n.createdAt).toLocaleString("vi-VN")}</span>
                   </div>
-                  <p className="text-sm text-ink-muted">{n.content}</p>
-                  <span className="text-xs text-ink-muted">{new Date(n.createdAt).toLocaleString("vi-VN")}</span>
                 </button>
               </StaggerItem>
             );

@@ -54,9 +54,23 @@ export function StaggerGroup({ children, className }: { children: React.ReactNod
   );
 }
 
-export function StaggerItem({ children, className }: { children: React.ReactNode; className?: string }) {
+export function StaggerItem({
+  children,
+  className,
+  hoverLift = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  hoverLift?: boolean;
+}) {
+  const reduce = useReducedMotion();
   return (
-    <motion.div className={className} variants={staggerItem}>
+    <motion.div
+      className={className}
+      variants={staggerItem}
+      whileHover={hoverLift && !reduce ? { y: -4 } : undefined}
+      transition={{ type: "spring", stiffness: 320, damping: 24 }}
+    >
       {children}
     </motion.div>
   );

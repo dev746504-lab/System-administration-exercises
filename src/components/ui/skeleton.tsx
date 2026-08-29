@@ -1,7 +1,11 @@
 import { cn } from "@/lib/cn";
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-lg bg-surface-2", className)} />;
+  return (
+    <div className={cn("relative overflow-hidden rounded-lg bg-surface-2", className)}>
+      <div className="animate-shimmer absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/10" />
+    </div>
+  );
 }
 
 export function SkeletonCard() {

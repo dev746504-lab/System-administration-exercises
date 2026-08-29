@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { BookOpen, Download, PlusCircle, Share2 } from "lucide-react";
+import { BookOpen, Download, FileText, ImageIcon, Music, PlusCircle, PuzzleIcon, Share2, Video } from "lucide-react";
 import { api, ApiError, type MaterialDto } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,13 @@ import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 
 const visibilityLabel: Record<string, string> = { private: "Cá nhân", class: "Chia sẻ lớp", institution: "Toàn CSGD" };
 const typeLabel: Record<string, string> = { video: "Video", document: "Tài liệu", image: "Hình ảnh", audio: "Âm thanh", interactive: "Tương tác" };
+const typeChip: Record<string, { icon: typeof FileText; soft: string; text: string }> = {
+  document: { icon: FileText, soft: "bg-accent-soft", text: "text-accent-strong" },
+  video: { icon: Video, soft: "bg-role-admin-soft", text: "text-role-admin" },
+  image: { icon: ImageIcon, soft: "bg-role-student-soft", text: "text-role-student" },
+  audio: { icon: Music, soft: "bg-accent-soft", text: "text-accent-strong" },
+  interactive: { icon: PuzzleIcon, soft: "bg-role-admin-soft", text: "text-role-admin" },
+};
 
 export default function MaterialsPage() {
   const { user } = useAuthStore();
@@ -105,7 +112,7 @@ export default function MaterialsPage() {
       ) : (
         <StaggerGroup className="grid gap-3 sm:grid-cols-2">
           {materials.map((m) => (
-            <StaggerItem key={m._id}>
+            <StaggerItem key={m._id} hoverLift>
               <MaterialCard material={m} canShare={canUpload} onShare={() => share.mutate(m._id)} sharing={share.isPending} institutionId={user!.institutionId!} />
             </StaggerItem>
           ))}
@@ -129,10 +136,17 @@ function MaterialCard({
   institutionId: string;
 }) {
   const recordDownload = useMutation({ mutationFn: () => api.materials.recordDownload(institutionId, material._id) });
+  const chip = typeChip[material.type] ?? typeChip.document;
+  const ChipIcon = chip.icon;
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-2">
-        <p className="font-display text-base font-medium text-ink">{material.title}</p>
+        <div className="flex items-center gap-2.5">
+          <span className={`flex h-8 w-8 flex-none items-center justify-center rounded-full ${chip.soft} ${chip.text}`}>
+            <ChipIcon className="h-4 w-4" strokeWidth={1.75} />
+          </span>
+          <p className="font-display text-base font-medium text-ink">{material.title}</p>
+        </div>
         <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink-muted">{visibilityLabel[material.visibility]}</span>
       </div>
       <p className="text-xs text-ink-muted">

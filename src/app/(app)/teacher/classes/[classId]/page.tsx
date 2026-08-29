@@ -3,12 +3,21 @@
 import { use, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, ClipboardList, PlusCircle } from "lucide-react";
+import { ChevronDown, ChevronRight, ClipboardList, Laptop, NotebookPen, PlusCircle } from "lucide-react";
 import { api, ApiError, type SubmissionDto } from "@/lib/api";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
+
+const statusDot: Record<string, string> = {
+  graded: "bg-accent",
+  late: "bg-danger",
+  submitted: "bg-role-admin",
+  not_submitted: "bg-role-student",
+};
 
 export default function ClassDetailPage({ params }: { params: Promise<{ classId: string }> }) {
   const { classId } = use(params);
@@ -83,29 +92,46 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
       <div>
         <h2 className="mb-3 font-display text-lg font-medium text-ink">Danh sách bài tập</h2>
         {isLoading ? (
-          <p className="text-sm text-ink-muted">Đang tải…</p>
-        ) : !assignments?.length ? (
-          <EmptyState icon={ClipboardList} title="Chưa có bài tập nào" />
-        ) : (
           <div className="flex flex-col gap-2">
-            {assignments.map((a) => (
-              <div key={a._id} className="rounded-xl border border-border bg-surface">
-                <button
-                  onClick={() => setExpanded(expanded === a._id ? null : a._id)}
-                  className="flex w-full items-center justify-between px-5 py-4 text-left"
-                >
-                  <div>
-                    <p className="font-display text-base font-medium text-ink">{a.title}</p>
-                    <p className="text-sm text-ink-muted">
-                      {a.type === "online" ? "Online" : "Offline"} · Hạn: {new Date(a.dueDate).toLocaleString("vi-VN")} · Tối đa {a.maxScore} điểm
-                    </p>
-                  </div>
-                  {expanded === a._id ? <ChevronDown className="h-5 w-5 text-ink-muted" /> : <ChevronRight className="h-5 w-5 text-ink-muted" />}
-                </button>
-                {expanded === a._id && <SubmissionsPanel assignmentId={a._id} />}
+            {[0, 1].map((i) => (
+              <div key={i} className="rounded-xl border border-border bg-surface p-5">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="mt-2 h-3 w-56" />
               </div>
             ))}
           </div>
+        ) : !assignments?.length ? (
+          <EmptyState icon={ClipboardList} title="Chưa có bài tập nào" />
+        ) : (
+          <StaggerGroup className="flex flex-col gap-2">
+            {assignments.map((a) => {
+              const TypeIcon = a.type === "online" ? Laptop : NotebookPen;
+              return (
+                <StaggerItem key={a._id} hoverLift className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+                  <button
+                    onClick={() => setExpanded(expanded === a._id ? null : a._id)}
+                    className="flex w-full items-center gap-4 px-5 py-4 text-left"
+                  >
+                    <span
+                      className={`flex h-10 w-10 flex-none items-center justify-center rounded-full ${
+                        a.type === "online" ? "bg-role-admin-soft text-role-admin" : "bg-role-student-soft text-role-student"
+                      }`}
+                    >
+                      <TypeIcon className="h-5 w-5" strokeWidth={1.75} />
+                    </span>
+                    <div className="flex-1">
+                      <p className="font-display text-base font-medium text-ink">{a.title}</p>
+                      <p className="text-sm text-ink-muted">
+                        {a.type === "online" ? "Online" : "Offline"} · Hạn: {new Date(a.dueDate).toLocaleString("vi-VN")} · Tối đa {a.maxScore} điểm
+                      </p>
+                    </div>
+                    {expanded === a._id ? <ChevronDown className="h-5 w-5 text-ink-muted" /> : <ChevronRight className="h-5 w-5 text-ink-muted" />}
+                  </button>
+                  {expanded === a._id && <SubmissionsPanel assignmentId={a._id} />}
+                </StaggerItem>
+              );
+            })}
+          </StaggerGroup>
         )}
       </div>
     </div>
@@ -128,7 +154,13 @@ function SubmissionsPanel({ assignmentId }: { assignmentId: string }) {
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể chấm điểm"),
   });
 
-  if (isLoading) return <p className="px-5 pb-4 text-sm text-ink-muted">Đang tải bài nộp…</p>;
+  if (isLoading)
+    return (
+      <div className="flex flex-col gap-2 border-t border-border px-5 py-4">
+        <Skeleton className="h-9 w-full" />
+        <Skeleton className="h-9 w-full" />
+      </div>
+    );
   if (!submissions?.length) return <p className="border-t border-border px-5 py-4 text-sm text-ink-muted">Chưa có học sinh nào nộp bài.</p>;
 
   return (
@@ -156,7 +188,8 @@ function SubmissionRow({
     <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-2 px-3 py-2">
       <div className="min-w-[140px] flex-1">
         <p className="text-sm font-medium text-ink">{submission.studentId.fullName}</p>
-        <p className="text-xs text-ink-muted">
+        <p className="flex items-center gap-1.5 text-xs text-ink-muted">
+          <span className={`h-1.5 w-1.5 rounded-full ${statusDot[submission.status] ?? statusDot.not_submitted}`} />
           {submission.status === "graded" ? "Đã chấm" : submission.status === "late" ? "Nộp muộn" : submission.status === "submitted" ? "Đã nộp" : "Chưa nộp"}
         </p>
       </div>

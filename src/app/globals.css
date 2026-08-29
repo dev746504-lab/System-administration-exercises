@@ -7,42 +7,50 @@
   --ink: #1c231f;
   --ink-muted: #5b6459;
   --border: #e2ddcb;
-  --accent: #1f6f5c;
-  --accent-strong: #14493d;
-  --accent-soft: #e4efe9;
+  --accent: #0ea472;
+  --accent-strong: #0a7857;
+  --accent-soft: #d3f5e6;
 
-  --role-admin: #4c5fd5;
-  --role-admin-soft: #e9eafc;
-  --role-teacher: #1f6f5c;
-  --role-teacher-soft: #e4efe9;
-  --role-student: #b96f22;
-  --role-student-soft: #f6ead9;
+  --role-admin: #6a5cf5;
+  --role-admin-soft: #ebe8ff;
+  --role-teacher: #0ea472;
+  --role-teacher-soft: #d3f5e6;
+  --role-student: #f2930f;
+  --role-student-soft: #ffedcf;
 
-  --danger: #b3413a;
-  --danger-soft: #f8e7e5;
+  --danger: #e0453f;
+  --danger-soft: #fde3e1;
+
+  --gradient-a: #0ea472;
+  --gradient-b: #6a5cf5;
+  --gradient-c: #f2930f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #14181a;
-    --surface: #1a1f20;
-    --surface-2: #202624;
-    --ink: #ece9dc;
-    --ink-muted: #9ba69c;
-    --border: #2c3432;
-    --accent: #5fc4a5;
-    --accent-strong: #8adfc4;
-    --accent-soft: #1c2c27;
+    --bg: #12181a;
+    --surface: #1a2224;
+    --surface-2: #212a2c;
+    --ink: #eef2ee;
+    --ink-muted: #9db0a8;
+    --border: #2c3836;
+    --accent: #2de3a3;
+    --accent-strong: #7ff2c8;
+    --accent-soft: #113329;
 
-    --role-admin: #8b97f0;
-    --role-admin-soft: #232746;
-    --role-teacher: #5fc4a5;
-    --role-teacher-soft: #1c2c27;
-    --role-student: #e3a45c;
-    --role-student-soft: #332512;
+    --role-admin: #9b8dff;
+    --role-admin-soft: #241f45;
+    --role-teacher: #2de3a3;
+    --role-teacher-soft: #113329;
+    --role-student: #ffb64d;
+    --role-student-soft: #3a2409;
 
-    --danger: #e08a83;
-    --danger-soft: #3a2321;
+    --danger: #ff7a72;
+    --danger-soft: #3a1614;
+
+    --gradient-a: #2de3a3;
+    --gradient-b: #9b8dff;
+    --gradient-c: #ffb64d;
   }
 }
 
@@ -64,6 +72,9 @@
   --color-role-student-soft: var(--role-student-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-gradient-a: var(--gradient-a);
+  --color-gradient-b: var(--gradient-b);
+  --color-gradient-c: var(--gradient-c);
   --font-display: var(--font-newsreader), Georgia, serif;
   --font-sans: var(--font-plex-sans), "Segoe UI", sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
@@ -86,4 +97,33 @@ body {
 ::selection {
   background: var(--accent-soft);
   color: var(--accent-strong);
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes blob-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(3%, -4%) scale(1.05); }
+  66% { transform: translate(-3%, 3%) scale(0.97); }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-blob {
+    animation: blob-float 16s ease-in-out infinite;
+  }
+}
+
+.text-gradient-brand {
+  background: linear-gradient(100deg, var(--gradient-a), var(--gradient-b));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

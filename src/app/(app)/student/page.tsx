@@ -82,7 +82,7 @@ function ClassAssignments({ klass }: { klass: ClassDto }) {
       ) : (
         <StaggerGroup className="flex flex-col gap-2">
           {assignments.map((a) => (
-            <StaggerItem key={a._id}>
+            <StaggerItem key={a._id} hoverLift>
               <AssignmentRow assignment={a} />
             </StaggerItem>
           ))}
@@ -107,9 +107,10 @@ function AssignmentRow({ assignment }: { assignment: AssignmentDto }) {
   });
 
   const submitted = mine && mine.status !== "not_submitted";
+  const statusBorder = mine?.status === "graded" ? "border-l-accent" : submitted ? "border-l-role-admin" : "border-l-role-student";
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className={`rounded-xl border border-l-4 border-border ${statusBorder} bg-surface p-4 shadow-sm transition-shadow hover:shadow-md`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-medium text-ink">{assignment.title}</p>
