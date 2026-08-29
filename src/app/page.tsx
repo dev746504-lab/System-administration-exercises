@@ -30,7 +30,7 @@ export default function Home() {
         <section className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_420px]">
           <div className="max-w-xl">
             <p className="font-mono text-xs uppercase tracking-widest text-accent-strong">
-              Dành cho CSGD, giáo viên và học sinh
+              Dành cho giáo viên và học sinh
             </p>
             <h1 className="mt-3 text-balance font-display text-4xl font-semibold leading-tight text-ink sm:text-5xl">
               Quản lý dạy và học, gọn trong một nền tảng
@@ -86,10 +86,13 @@ export default function Home() {
           </div>
         </Reveal>
 
-        <StaggerGroup className="grid gap-8 sm:grid-cols-3">
+        <StaggerGroup className="grid gap-8 sm:grid-cols-2">
           {[
-            { role: "CSGD", border: "border-role-admin", text: "Quản lý toàn bộ cơ sở: lớp học, thành viên, phân quyền, học liệu chung." },
-            { role: "Giáo viên", border: "border-role-teacher", text: "Chủ động lớp học của mình: giao bài, chấm bài, chia sẻ học liệu." },
+            {
+              role: "Giáo viên",
+              border: "border-role-teacher",
+              text: "Toàn quyền quản lý CSGD: lớp học, thành viên, kho học liệu chung, thông báo - cùng với giao bài, chấm bài hằng ngày.",
+            },
             { role: "Học sinh", border: "border-role-student", text: "Xem bài tập, nộp bài và theo dõi tiến trình học tập của chính mình." },
           ].map(({ role, border, text }) => (
             <StaggerItem key={role} className={`border-t-2 ${border} pt-4`}>
@@ -101,7 +104,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-border py-6 text-xs text-ink-muted">
-        Nền tảng quản lý học tập cho CSGD, giáo viên và học sinh.
+        Nền tảng quản lý học tập cho giáo viên và học sinh.
       </footer>
     </div>
   );

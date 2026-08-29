@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type Role = "system_admin" | "institution_admin" | "teacher" | "student";
+export type Role = "system_admin" | "teacher" | "student";
 
 export interface SessionUser {
   id: string;
@@ -36,14 +36,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 
 export const roleLabel: Record<Role, string> = {
   system_admin: "Quản trị hệ thống",
-  institution_admin: "Cơ sở giáo dục",
   teacher: "Giáo viên",
   student: "Học sinh",
 };
 
 export const roleHome: Record<Role, string> = {
   system_admin: "/admin",
-  institution_admin: "/admin",
   teacher: "/teacher",
   student: "/student",
 };

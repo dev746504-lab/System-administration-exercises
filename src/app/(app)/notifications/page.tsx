@@ -19,14 +19,14 @@ export default function NotificationsPage() {
   const { user } = useAuthStore();
   const qc = useQueryClient();
   const { data: notifications, isLoading } = useQuery({ queryKey: ["notifications"], queryFn: api.notifications.list });
-  const canSend = user?.role === "institution_admin" || user?.role === "teacher";
+  const canSend = user?.role === "teacher";
   const { data: classes } = useQuery({
     queryKey: ["classes", user?.institutionId, "notify"],
     queryFn: () => api.classes.list(user!.institutionId!),
     enabled: canSend && !!user?.institutionId,
   });
 
-  const [form, setForm] = useState({ scope: user?.role === "teacher" ? "class" : "institution", title: "", content: "", classId: "" });
+  const [form, setForm] = useState({ scope: "institution", title: "", content: "", classId: "" });
   const send = useMutation({
     mutationFn: () => api.notifications.send(form.scope === "class" ? form : { scope: form.scope, title: form.title, content: form.content }),
     onSuccess: () => {
@@ -64,7 +64,7 @@ export default function NotificationsPage() {
             <div className="grid grid-cols-[140px_1fr] gap-3">
               <Field label="Phạm vi">
                 <Select value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })}>
-                  {user?.role === "institution_admin" && <option value="institution">Toàn CSGD</option>}
+                  <option value="institution">Toàn CSGD</option>
                   <option value="class">Theo lớp</option>
                 </Select>
               </Field>

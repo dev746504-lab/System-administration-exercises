@@ -19,7 +19,7 @@ const typeLabel: Record<string, string> = { video: "Video", document: "TÃ i liá»
 export default function MaterialsPage() {
   const { user } = useAuthStore();
   const qc = useQueryClient();
-  const canUpload = user?.role === "teacher" || user?.role === "institution_admin";
+  const canUpload = user?.role === "teacher";
 
   const { data: materials, isLoading } = useQuery({
     queryKey: ["materials", user?.institutionId],

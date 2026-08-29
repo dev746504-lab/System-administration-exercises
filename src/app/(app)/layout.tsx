@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { LayoutDashboard, Users, BookOpen, Bell, LogOut, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, BookOpen, Bell, LogOut, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { RoleBadge } from "@/components/ui/role-badge";
 import { api } from "@/lib/api";
@@ -14,13 +14,8 @@ const NAV: Record<string, { href: string; label: string; icon: typeof LayoutDash
     { href: "/admin", label: "Duyệt CSGD", icon: ShieldCheck },
     { href: "/notifications", label: "Thông báo", icon: Bell },
   ],
-  institution_admin: [
-    { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
-    { href: "/materials", label: "Kho học liệu", icon: BookOpen },
-    { href: "/notifications", label: "Thông báo", icon: Bell },
-  ],
   teacher: [
-    { href: "/teacher", label: "Lớp học của tôi", icon: Users },
+    { href: "/teacher", label: "Tổng quan", icon: LayoutDashboard },
     { href: "/materials", label: "Kho học liệu", icon: BookOpen },
     { href: "/notifications", label: "Thông báo", icon: Bell },
   ],
