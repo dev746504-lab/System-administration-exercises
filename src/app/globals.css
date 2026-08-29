@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #faf7ef;
+  --surface: #ffffff;
+  --surface-2: #f1ede0;
+  --ink: #1c231f;
+  --ink-muted: #5b6459;
+  --border: #e2ddcb;
+  --accent: #1f6f5c;
+  --accent-strong: #14493d;
+  --accent-soft: #e4efe9;
+
+  --role-admin: #4c5fd5;
+  --role-admin-soft: #e9eafc;
+  --role-teacher: #1f6f5c;
+  --role-teacher-soft: #e4efe9;
+  --role-student: #b96f22;
+  --role-student-soft: #f6ead9;
+
+  --danger: #b3413a;
+  --danger-soft: #f8e7e5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14181a;
+    --surface: #1a1f20;
+    --surface-2: #202624;
+    --ink: #ece9dc;
+    --ink-muted: #9ba69c;
+    --border: #2c3432;
+    --accent: #5fc4a5;
+    --accent-strong: #8adfc4;
+    --accent-soft: #1c2c27;
+
+    --role-admin: #8b97f0;
+    --role-admin-soft: #232746;
+    --role-teacher: #5fc4a5;
+    --role-teacher-soft: #1c2c27;
+    --role-student: #e3a45c;
+    --role-student-soft: #332512;
+
+    --danger: #e08a83;
+    --danger-soft: #3a2321;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-role-admin: var(--role-admin);
+  --color-role-admin-soft: var(--role-admin-soft);
+  --color-role-teacher: var(--role-teacher);
+  --color-role-teacher-soft: var(--role-teacher-soft);
+  --color-role-student: var(--role-student);
+  --color-role-student-soft: var(--role-student-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-display: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-plex-sans), "Segoe UI", sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
