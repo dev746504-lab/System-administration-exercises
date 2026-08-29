@@ -11,6 +11,8 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
+import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
+import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 
 export default function AdminPage() {
   const { user } = useAuthStore();
@@ -38,23 +40,35 @@ function SystemAdminView() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-ink-muted">Đang tải…</p>
+        <div className="flex flex-col gap-3">
+          {[0, 1].map((i) => (
+            <div key={i} className="flex items-center justify-between rounded-xl border border-border bg-surface p-5">
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-9 w-20" />
+            </div>
+          ))}
+        </div>
       ) : !pending?.length ? (
         <EmptyState icon={ShieldCheck} title="Không có CSGD nào đang chờ duyệt" description="Danh sách sẽ xuất hiện ở đây khi có CSGD mới tự đăng ký." />
       ) : (
-        <div className="flex flex-col gap-3">
+        <StaggerGroup className="flex flex-col gap-3">
           {pending.map((inst) => (
-            <Card key={inst._id} className="flex items-center justify-between">
-              <div>
-                <p className="font-display text-base font-medium text-ink">{inst.name}</p>
-                <p className="font-mono text-xs text-ink-muted">{inst.code}</p>
-              </div>
-              <Button onClick={() => approve.mutate(inst._id)} loading={approve.isPending}>
-                Duyệt
-              </Button>
-            </Card>
+            <StaggerItem key={inst._id}>
+              <Card className="flex items-center justify-between">
+                <div>
+                  <p className="font-display text-base font-medium text-ink">{inst.name}</p>
+                  <p className="font-mono text-xs text-ink-muted">{inst.code}</p>
+                </div>
+                <Button onClick={() => approve.mutate(inst._id)} loading={approve.isPending}>
+                  Duyệt
+                </Button>
+              </Card>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGroup>
       )}
     </div>
   );
@@ -62,8 +76,8 @@ function SystemAdminView() {
 
 function InstitutionAdminView({ institutionId }: { institutionId: string }) {
   const qc = useQueryClient();
-  const { data: classes } = useQuery({ queryKey: ["classes", institutionId], queryFn: () => api.classes.list(institutionId), enabled: !!institutionId });
-  const { data: members } = useQuery({ queryKey: ["members", institutionId], queryFn: () => api.institutions.listMembers(institutionId), enabled: !!institutionId });
+  const { data: classes, isLoading: classesLoading } = useQuery({ queryKey: ["classes", institutionId], queryFn: () => api.classes.list(institutionId), enabled: !!institutionId });
+  const { data: members, isLoading: membersLoading } = useQuery({ queryKey: ["members", institutionId], queryFn: () => api.institutions.listMembers(institutionId), enabled: !!institutionId });
 
   const [classForm, setClassForm] = useState({ name: "", subject: "", gradeLevel: "", academicYear: "2026-2027" });
   const [memberForm, setMemberForm] = useState({ email: "", fullName: "", role: "teacher" });
@@ -95,10 +109,21 @@ function InstitutionAdminView({ institutionId }: { institutionId: string }) {
         <p className="text-sm text-ink-muted">Quản lý lớp học, thành viên và theo dõi hoạt động chung.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard label="Lớp học" value={classes?.length ?? 0} accent="role-admin" hint="đang hoạt động" />
-        <StatCard label="Thành viên" value={members?.length ?? 0} accent="role-teacher" hint="giáo viên & học sinh" />
-      </div>
+      {classesLoading || membersLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      ) : (
+        <StaggerGroup className="grid gap-4 sm:grid-cols-2">
+          <StaggerItem>
+            <StatCard label="Lớp học" value={classes?.length ?? 0} accent="role-admin" hint="đang hoạt động" />
+          </StaggerItem>
+          <StaggerItem>
+            <StatCard label="Thành viên" value={members?.length ?? 0} accent="role-teacher" hint="giáo viên & học sinh" />
+          </StaggerItem>
+        </StaggerGroup>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -110,7 +135,7 @@ function InstitutionAdminView({ institutionId }: { institutionId: string }) {
               classes.map((c) => (
                 <div key={c._id} className="flex items-center justify-between rounded-lg bg-surface-2 px-3 py-2 text-sm">
                   <span className="font-medium text-ink">{c.name}</span>
-                  <span className="text-ink-muted">{c.subject ?? "—"} · {c.academicYear}</span>
+                  <span className="text-ink-muted">{c.subject ?? "-"} · {c.academicYear}</span>
                 </div>
               ))
             ) : (

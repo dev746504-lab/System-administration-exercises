@@ -10,6 +10,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/field";
 import { ProgressRing } from "@/components/progress-ring";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Reveal, StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 
 export default function StudentPage() {
   const { user } = useAuthStore();
@@ -32,7 +34,7 @@ export default function StudentPage() {
       </div>
 
       {!!progress?.length && (
-        <div className="flex flex-wrap gap-4">
+        <Reveal className="flex flex-wrap gap-4">
           {progress.map((p) => (
             <ProgressRing
               key={p._id}
@@ -41,13 +43,20 @@ export default function StudentPage() {
               sub={`${p.completedCount}/${p.totalCount} bài đã chấm`}
             />
           ))}
-        </div>
+        </Reveal>
       )}
 
       <div>
         <h2 className="mb-3 font-display text-lg font-medium text-ink">Bài tập theo lớp</h2>
         {isLoading ? (
-          <p className="text-sm text-ink-muted">Đang tải…</p>
+          <div className="flex flex-col gap-3">
+            {[0, 1].map((i) => (
+              <div key={i} className="rounded-xl border border-border bg-surface p-4">
+                <Skeleton className="mb-2 h-4 w-28" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            ))}
+          </div>
         ) : !classes?.length ? (
           <EmptyState icon={ClipboardList} title="Bạn chưa được xếp vào lớp nào" />
         ) : (
@@ -71,11 +80,13 @@ function ClassAssignments({ klass }: { klass: ClassDto }) {
       {!assignments?.length ? (
         <p className="text-sm text-ink-muted">Chưa có bài tập nào.</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <StaggerGroup className="flex flex-col gap-2">
           {assignments.map((a) => (
-            <AssignmentRow key={a._id} assignment={a} />
+            <StaggerItem key={a._id}>
+              <AssignmentRow assignment={a} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGroup>
       )}
     </div>
   );

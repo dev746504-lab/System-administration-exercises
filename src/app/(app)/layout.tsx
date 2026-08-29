@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { LayoutDashboard, Users, BookOpen, Bell, LogOut, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { RoleBadge } from "@/components/ui/role-badge";
@@ -34,6 +35,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
   const router = useRouter();
   const pathname = usePathname();
   const { user, ready, clear } = useAuthStore();
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
@@ -70,12 +72,19 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? "bg-accent-soft text-accent-strong" : "text-ink-muted hover:bg-surface-2 hover:text-ink"
+                className={`relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  active ? "text-accent-strong" : "text-ink-muted hover:bg-surface-2 hover:text-ink"
                 }`}
               >
-                <Icon className="h-4 w-4" strokeWidth={1.75} />
-                {label}
+                {active && (
+                  <motion.span
+                    layoutId="nav-active"
+                    className="absolute inset-0 rounded-lg bg-accent-soft"
+                    transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 32 }}
+                  />
+                )}
+                <Icon className="relative h-4 w-4" strokeWidth={1.75} />
+                <span className="relative">{label}</span>
               </Link>
             );
           })}
@@ -102,7 +111,18 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
       </aside>
 
       <main className="flex-1 overflow-x-hidden px-8 py-8">
-        <div className="mx-auto max-w-5xl">{children}</div>
+        <div className="mx-auto max-w-5xl">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={pathname}
+              initial={reduce ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </main>
     </div>
   );

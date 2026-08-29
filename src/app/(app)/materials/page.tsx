@@ -10,6 +10,8 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 
 const visibilityLabel: Record<string, string> = { private: "Cá nhân", class: "Chia sẻ lớp", institution: "Toàn CSGD" };
 const typeLabel: Record<string, string> = { video: "Video", document: "Tài liệu", image: "Hình ảnh", audio: "Âm thanh", interactive: "Tương tác" };
@@ -89,15 +91,25 @@ export default function MaterialsPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-ink-muted">Đang tải…</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/3" />
+              <Skeleton className="mt-1 h-3 w-20" />
+            </div>
+          ))}
+        </div>
       ) : !materials?.length ? (
         <EmptyState icon={BookOpen} title="Chưa có học liệu nào" />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <StaggerGroup className="grid gap-3 sm:grid-cols-2">
           {materials.map((m) => (
-            <MaterialCard key={m._id} material={m} canShare={canUpload} onShare={() => share.mutate(m._id)} sharing={share.isPending} institutionId={user!.institutionId!} />
+            <StaggerItem key={m._id}>
+              <MaterialCard material={m} canShare={canUpload} onShare={() => share.mutate(m._id)} sharing={share.isPending} institutionId={user!.institutionId!} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGroup>
       )}
     </div>
   );

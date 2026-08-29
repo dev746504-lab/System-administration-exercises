@@ -74,8 +74,13 @@ body {
   color: var(--ink);
 }
 
-* {
-  border-color: var(--border);
+/* Unlayered rules always beat Tailwind's @layer utilities regardless of
+   specificity, so this default must live in the same layer system -
+   otherwise no border-{color} utility could ever override it. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 }
 
 ::selection {

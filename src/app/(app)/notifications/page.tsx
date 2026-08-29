@@ -10,6 +10,8 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 
 const typeLabel: Record<string, string> = { announcement: "Thông báo", assignment: "Bài tập", grade: "Điểm số", system: "Hệ thống" };
 
@@ -101,31 +103,39 @@ export default function NotificationsPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-ink-muted">Đang tải…</p>
+        <div className="flex flex-col gap-2">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-xl border border-border bg-surface px-4 py-3">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="mt-2 h-3 w-2/3" />
+            </div>
+          ))}
+        </div>
       ) : !notifications?.length ? (
         <EmptyState icon={Bell} title="Chưa có thông báo nào" />
       ) : (
-        <div className="flex flex-col gap-2">
+        <StaggerGroup className="flex flex-col gap-2">
           {notifications.map((n) => {
             const read = n.readBy.some((r) => r.userId === user?.id);
             return (
-              <button
-                key={n._id}
-                onClick={() => !read && markRead.mutate(n._id)}
-                className={`flex flex-col items-start gap-1 rounded-xl border px-4 py-3 text-left transition-colors ${
-                  read ? "border-border bg-surface" : "border-accent bg-accent-soft"
-                }`}
-              >
-                <div className="flex w-full items-center justify-between">
-                  <span className="text-sm font-semibold text-ink">{n.title}</span>
-                  <span className="text-xs text-ink-muted">{typeLabel[n.type] ?? n.type}</span>
-                </div>
-                <p className="text-sm text-ink-muted">{n.content}</p>
-                <span className="text-xs text-ink-muted">{new Date(n.createdAt).toLocaleString("vi-VN")}</span>
-              </button>
+              <StaggerItem key={n._id}>
+                <button
+                  onClick={() => !read && markRead.mutate(n._id)}
+                  className={`flex w-full flex-col items-start gap-1 rounded-xl border px-4 py-3 text-left transition-all duration-150 active:scale-[0.99] ${
+                    read ? "border-border bg-surface" : "border-accent bg-accent-soft"
+                  }`}
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <span className="text-sm font-semibold text-ink">{n.title}</span>
+                    <span className="text-xs text-ink-muted">{typeLabel[n.type] ?? n.type}</span>
+                  </div>
+                  <p className="text-sm text-ink-muted">{n.content}</p>
+                  <span className="text-xs text-ink-muted">{new Date(n.createdAt).toLocaleString("vi-VN")}</span>
+                </button>
+              </StaggerItem>
             );
           })}
-        </div>
+        </StaggerGroup>
       )}
     </div>
   );
