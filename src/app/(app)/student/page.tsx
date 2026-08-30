@@ -155,6 +155,11 @@ function AssignmentRow({ assignment }: { assignment: AssignmentDto }) {
   const isUploading = files.some((f) => !f.url && !f.error);
   const canSubmit = (!!text.trim() || completedFiles > 0) && !isUploading;
 
+  const now = Date.now();
+  const isPastDue = now > new Date(assignment.dueDate).getTime();
+  const lateDeadlinePassed = !!assignment.lateSubmissionDeadline && now > new Date(assignment.lateSubmissionDeadline).getTime();
+  const noMoreSubmissions = isPastDue && (!assignment.allowLateSubmission || lateDeadlinePassed);
+
   return (
     <div className={`rounded-xl border border-l-4 border-border ${statusBorder} bg-surface p-4 shadow-sm transition-shadow hover:shadow-md`}>
       <div className="flex items-start justify-between gap-3">
@@ -182,8 +187,18 @@ function AssignmentRow({ assignment }: { assignment: AssignmentDto }) {
         <p className="mt-3 border-t border-border pt-3 text-sm text-ink-muted">Bài tập đã đóng, không còn nhận bài nộp.</p>
       )}
 
-      {!submitted && assignment.status !== "closed" && assignment.type === "online" && (
+      {!submitted && assignment.status !== "closed" && noMoreSubmissions && (
+        <p className="mt-3 border-t border-border pt-3 text-sm text-ink-muted">Đã quá hạn nộp muộn, không thể nộp bài nữa.</p>
+      )}
+
+      {!submitted && assignment.status !== "closed" && !noMoreSubmissions && assignment.type === "online" && (
         <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
+          {isPastDue && (
+            <p className="text-xs text-danger">
+              Đã quá hạn nộp chính thức — bài nộp bây giờ sẽ tính là nộp muộn
+              {assignment.lateSubmissionDeadline && ` (hạn chót: ${new Date(assignment.lateSubmissionDeadline).toLocaleString("vi-VN")})`}.
+            </p>
+          )}
           <Textarea rows={2} placeholder="Nội dung bài làm…" value={text} onChange={(e) => setText(e.target.value)} />
 
           <label

@@ -33,42 +33,82 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
   const { data: klass } = useQuery({ queryKey: ["class", classId], queryFn: () => api.classes.get(classId) });
   const { data: assignments, isLoading } = useQuery({ queryKey: ["assignments", classId], queryFn: () => api.assignments.listForClass(classId) });
 
-  const [form, setForm] = useState<{ title: string; description: string; type: "online" | "offline"; dueDate: string; maxScore: number }>({
+  const [form, setForm] = useState<{
+    title: string;
+    description: string;
+    type: "online" | "offline";
+    dueDate: string;
+    maxScore: number;
+    allowLateSubmission: boolean;
+    lateSubmissionDeadline: string;
+  }>({
     title: "",
     description: "",
     type: "offline",
     dueDate: "",
     maxScore: 10,
+    allowLateSubmission: true,
+    lateSubmissionDeadline: "",
   });
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const createAssignment = useMutation({
     mutationFn: (status: "draft" | "assigned") =>
-      api.assignments.create(classId, { ...form, dueDate: new Date(form.dueDate).toISOString(), status }),
+      api.assignments.create(classId, {
+        ...form,
+        dueDate: new Date(form.dueDate).toISOString(),
+        status,
+        lateSubmissionDeadline:
+          form.allowLateSubmission && form.lateSubmissionDeadline ? new Date(form.lateSubmissionDeadline).toISOString() : undefined,
+      }),
     onSuccess: (_, status) => {
       toast.success(status === "draft" ? "Đã lưu nháp" : "Đã giao bài tập");
-      setForm({ title: "", description: "", type: "offline", dueDate: "", maxScore: 10 });
+      setForm({ title: "", description: "", type: "offline", dueDate: "", maxScore: 10, allowLateSubmission: true, lateSubmissionDeadline: "" });
       qc.invalidateQueries({ queryKey: ["assignments", classId] });
     },
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể tạo bài tập"),
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ title: string; description: string; type: "online" | "offline"; dueDate: string; maxScore: number }>({
+  const [editForm, setEditForm] = useState<{
+    title: string;
+    description: string;
+    type: "online" | "offline";
+    dueDate: string;
+    maxScore: number;
+    allowLateSubmission: boolean;
+    lateSubmissionDeadline: string;
+  }>({
     title: "",
     description: "",
     type: "offline",
     dueDate: "",
     maxScore: 10,
+    allowLateSubmission: true,
+    lateSubmissionDeadline: "",
   });
 
   function startEdit(a: AssignmentDto) {
     setEditingId(a._id);
-    setEditForm({ title: a.title, description: a.description ?? "", type: a.type, dueDate: toDatetimeLocal(a.dueDate), maxScore: a.maxScore });
+    setEditForm({
+      title: a.title,
+      description: a.description ?? "",
+      type: a.type,
+      dueDate: toDatetimeLocal(a.dueDate),
+      maxScore: a.maxScore,
+      allowLateSubmission: a.allowLateSubmission,
+      lateSubmissionDeadline: a.lateSubmissionDeadline ? toDatetimeLocal(a.lateSubmissionDeadline) : "",
+    });
   }
 
   const updateAssignment = useMutation({
-    mutationFn: () => api.assignments.update(editingId!, { ...editForm, dueDate: new Date(editForm.dueDate).toISOString() }),
+    mutationFn: () =>
+      api.assignments.update(editingId!, {
+        ...editForm,
+        dueDate: new Date(editForm.dueDate).toISOString(),
+        lateSubmissionDeadline:
+          editForm.allowLateSubmission && editForm.lateSubmissionDeadline ? new Date(editForm.lateSubmissionDeadline).toISOString() : null,
+      }),
     onSuccess: () => {
       toast.success("Đã lưu thay đổi");
       setEditingId(null);
@@ -185,6 +225,26 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
               <Input type="number" min={0} max={100} required value={form.maxScore} onChange={(e) => setForm({ ...form, maxScore: Number(e.target.value) })} />
             </Field>
           </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex items-center gap-2 text-sm text-ink">
+              <input
+                type="checkbox"
+                checked={form.allowLateSubmission}
+                onChange={(e) => setForm({ ...form, allowLateSubmission: e.target.checked, lateSubmissionDeadline: e.target.checked ? form.lateSubmissionDeadline : "" })}
+                className="h-4 w-4 rounded border-border"
+              />
+              Cho phép nộp muộn
+            </label>
+            {form.allowLateSubmission && (
+              <Field label="Hạn nộp muộn (tuỳ chọn)">
+                <Input
+                  type="datetime-local"
+                  value={form.lateSubmissionDeadline}
+                  onChange={(e) => setForm({ ...form, lateSubmissionDeadline: e.target.value })}
+                />
+              </Field>
+            )}
+          </div>
           <div className="flex gap-2">
             <Button type="submit" variant="secondary" loading={createAssignment.isPending && createAssignment.variables === "assigned"}>
               <PlusCircle className="h-4 w-4" /> Giao bài
@@ -263,6 +323,32 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
                           />
                         </Field>
                       </div>
+                      <div className="flex flex-wrap items-end gap-3">
+                        <label className="flex items-center gap-2 text-sm text-ink">
+                          <input
+                            type="checkbox"
+                            checked={editForm.allowLateSubmission}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                allowLateSubmission: e.target.checked,
+                                lateSubmissionDeadline: e.target.checked ? editForm.lateSubmissionDeadline : "",
+                              })
+                            }
+                            className="h-4 w-4 rounded border-border"
+                          />
+                          Cho phép nộp muộn
+                        </label>
+                        {editForm.allowLateSubmission && (
+                          <Field label="Hạn nộp muộn (tuỳ chọn)">
+                            <Input
+                              type="datetime-local"
+                              value={editForm.lateSubmissionDeadline}
+                              onChange={(e) => setEditForm({ ...editForm, lateSubmissionDeadline: e.target.value })}
+                            />
+                          </Field>
+                        )}
+                      </div>
                       <div className="flex gap-2">
                         <Button type="submit" variant="secondary" loading={updateAssignment.isPending}>
                           Lưu
@@ -297,6 +383,10 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
                           </div>
                           <p className="text-sm text-ink-muted">
                             {a.type === "online" ? "Online" : "Offline"} · Hạn: {new Date(a.dueDate).toLocaleString("vi-VN")} · Tối đa {a.maxScore} điểm
+                            {!a.allowLateSubmission && " · Không nhận bài muộn"}
+                            {a.allowLateSubmission && a.lateSubmissionDeadline && (
+                              <> · Nộp muộn đến: {new Date(a.lateSubmissionDeadline).toLocaleString("vi-VN")}</>
+                            )}
                           </p>
                         </div>
                       </button>

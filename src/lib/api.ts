@@ -128,6 +128,8 @@ export const api = {
         dueDate: string;
         maxScore: number;
         status?: "draft" | "assigned";
+        allowLateSubmission?: boolean;
+        lateSubmissionDeadline?: string;
       },
     ) => post<AssignmentDto>(`/classes/${classId}/assignments`, dto),
     get: (assignmentId: string) => get<AssignmentDto>(`/assignments/${assignmentId}`),
@@ -141,6 +143,8 @@ export const api = {
         attachedMaterialIds: string[];
         dueDate: string;
         maxScore: number;
+        allowLateSubmission: boolean;
+        lateSubmissionDeadline: string | null;
       }>,
     ) => patch<AssignmentDto>(`/assignments/${assignmentId}`, dto),
     remove: (assignmentId: string) => del<void>(`/assignments/${assignmentId}`),
@@ -221,6 +225,8 @@ export interface AssignmentDto {
   dueDate: string;
   maxScore: number;
   status: string;
+  allowLateSubmission: boolean;
+  lateSubmissionDeadline?: string;
 }
 
 export interface SubmissionDto {
