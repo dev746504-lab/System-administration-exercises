@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarClock, CheckCircle2, ClipboardList } from "lucide-react";
+import { CalendarClock, CheckCircle2, ClipboardList, FileText, Paperclip, UploadCloud, X } from "lucide-react";
 import { api, ApiError, type AssignmentDto, type ClassDto } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/field";
 import { ProgressRing } from "@/components/progress-ring";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Reveal, StaggerGroup, StaggerItem } from "@/components/motion/reveal";
+import { MAX_FILES, uploadToCloudinary, validateFile } from "@/lib/upload";
 
 export default function StudentPage() {
   const { user } = useAuthStore();
@@ -88,13 +89,28 @@ function ClassAssignments({ klass }: { klass: ClassDto }) {
   );
 }
 
+interface UploadingFile {
+  id: string;
+  file: File;
+  progress: number;
+  url?: string;
+  error?: string;
+}
+
 function AssignmentRow({ assignment }: { assignment: AssignmentDto }) {
   const qc = useQueryClient();
   const [text, setText] = useState("");
+  const [files, setFiles] = useState<UploadingFile[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputId = useId();
   const { data: mine } = useQuery({ queryKey: ["my-submission", assignment._id], queryFn: () => api.submissions.findMine(assignment._id) });
 
   const submit = useMutation({
-    mutationFn: () => api.submissions.submit(assignment._id, { textContent: text }),
+    mutationFn: () =>
+      api.submissions.submit(assignment._id, {
+        textContent: text,
+        fileUrls: files.filter((f) => f.url).map((f) => f.url!),
+      }),
     onSuccess: () => {
       toast.success("Đã nộp bài");
       qc.invalidateQueries({ queryKey: ["my-submission", assignment._id] });
@@ -102,8 +118,42 @@ function AssignmentRow({ assignment }: { assignment: AssignmentDto }) {
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể nộp bài"),
   });
 
+  const uploadOne = (uf: UploadingFile) => {
+    api.uploads
+      .getSignature()
+      .then((sig) =>
+        uploadToCloudinary(uf.file, sig, (progress) => setFiles((prev) => prev.map((f) => (f.id === uf.id ? { ...f, progress } : f)))),
+      )
+      .then((url) => setFiles((prev) => prev.map((f) => (f.id === uf.id ? { ...f, url, progress: 100 } : f))))
+      .catch(() => setFiles((prev) => prev.map((f) => (f.id === uf.id ? { ...f, error: "Tải lên thất bại" } : f))));
+  };
+
+  const addFiles = (list: FileList | null) => {
+    if (!list?.length) return;
+    const incoming = Array.from(list);
+    if (files.length + incoming.length > MAX_FILES) {
+      toast.error(`Tối đa ${MAX_FILES} file mỗi bài nộp`);
+      return;
+    }
+    for (const file of incoming) {
+      const error = validateFile(file);
+      if (error) {
+        toast.error(error);
+        continue;
+      }
+      const uf: UploadingFile = { id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`, file, progress: 0 };
+      setFiles((prev) => [...prev, uf]);
+      uploadOne(uf);
+    }
+  };
+
+  const removeFile = (id: string) => setFiles((prev) => prev.filter((f) => f.id !== id));
+
   const submitted = mine && mine.status !== "not_submitted";
   const statusBorder = mine?.status === "graded" ? "border-l-accent" : submitted ? "border-l-role-admin" : "border-l-role-student";
+  const completedFiles = files.filter((f) => f.url).length;
+  const isUploading = files.some((f) => !f.url && !f.error);
+  const canSubmit = (!!text.trim() || completedFiles > 0) && !isUploading;
 
   return (
     <div className={`rounded-xl border border-l-4 border-border ${statusBorder} bg-surface p-4 shadow-sm transition-shadow hover:shadow-md`}>
@@ -124,10 +174,63 @@ function AssignmentRow({ assignment }: { assignment: AssignmentDto }) {
       </div>
 
       {!submitted && assignment.type === "online" && (
-        <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+        <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
           <Textarea rows={2} placeholder="Nội dung bài làm…" value={text} onChange={(e) => setText(e.target.value)} />
-          <Button variant="secondary" className="self-start" loading={submit.isPending} onClick={() => submit.mutate()} disabled={!text.trim()}>
-            Nộp bài
+
+          <label
+            htmlFor={fileInputId}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              addFiles(e.dataTransfer.files);
+            }}
+            className={`flex cursor-pointer flex-col items-center gap-1 rounded-lg border-2 border-dashed px-4 py-4 text-center text-sm transition-colors ${
+              dragOver ? "border-accent bg-accent-soft" : "border-border text-ink-muted hover:border-accent"
+            }`}
+          >
+            <UploadCloud className="h-5 w-5" />
+            Kéo thả file vào đây, hoặc bấm để chọn
+            <span className="text-xs">PDF, Word, ảnh (jpg/png/heic) · tối đa 20MB/file · tối đa {MAX_FILES} file</span>
+            <input
+              id={fileInputId}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                addFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </label>
+
+          {files.length > 0 && (
+            <ul className="flex flex-col gap-1.5">
+              {files.map((f) => (
+                <li key={f.id} className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2 text-sm">
+                  <FileText className="h-4 w-4 flex-none text-ink-muted" />
+                  <span className="min-w-0 flex-1 truncate text-ink">{f.file.name}</span>
+                  {f.error ? (
+                    <span className="text-xs text-danger">{f.error}</span>
+                  ) : f.url ? (
+                    <span className="text-xs text-accent-strong">Đã tải lên</span>
+                  ) : (
+                    <span className="w-16 text-xs text-ink-muted">{f.progress}%</span>
+                  )}
+                  <button type="button" onClick={() => removeFile(f.id)} className="text-ink-muted hover:text-danger">
+                    <X className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <Button variant="secondary" className="self-start" loading={submit.isPending} onClick={() => submit.mutate()} disabled={!canSubmit}>
+            <Paperclip className="h-4 w-4" /> Nộp bài
           </Button>
         </div>
       )}

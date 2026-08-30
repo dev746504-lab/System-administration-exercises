@@ -3,7 +3,7 @@
 import { use, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, ClipboardList, Laptop, NotebookPen, PlusCircle, UserPlus } from "lucide-react";
+import { ChevronDown, ChevronRight, ClipboardList, Laptop, NotebookPen, Paperclip, PlusCircle, UserPlus } from "lucide-react";
 import { api, ApiError, type SubmissionDto } from "@/lib/api";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -261,6 +261,22 @@ function SubmissionRow({
           <span className="font-medium text-ink-muted">Bài làm: </span>
           {submission.textContent}
         </p>
+      )}
+      {!!submission.fileUrls?.length && (
+        <div className="flex flex-wrap gap-2 rounded-md bg-surface px-3 py-2">
+          {submission.fileUrls.map((url) => (
+            <a
+              key={url}
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1 text-xs text-ink hover:border-accent"
+            >
+              <Paperclip className="h-3.5 w-3.5" />
+              {url.split("/").pop()}
+            </a>
+          ))}
+        </div>
       )}
     </div>
   );

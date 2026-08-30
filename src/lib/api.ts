@@ -1,4 +1,5 @@
 import { useAuthStore, type SessionUser } from "./auth-store";
+import type { UploadSignature } from "./upload";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
@@ -128,6 +129,9 @@ export const api = {
       },
     ) => post<AssignmentDto>(`/classes/${classId}/assignments`, dto),
     get: (assignmentId: string) => get<AssignmentDto>(`/assignments/${assignmentId}`),
+  },
+  uploads: {
+    getSignature: () => post<UploadSignature>("/uploads/signature"),
   },
   submissions: {
     submit: (assignmentId: string, dto: { textContent?: string; fileUrls?: string[] }) =>
