@@ -43,9 +43,10 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const createAssignment = useMutation({
-    mutationFn: () => api.assignments.create(classId, { ...form, dueDate: new Date(form.dueDate).toISOString() }),
-    onSuccess: () => {
-      toast.success("Đã giao bài tập");
+    mutationFn: (status: "draft" | "assigned") =>
+      api.assignments.create(classId, { ...form, dueDate: new Date(form.dueDate).toISOString(), status }),
+    onSuccess: (_, status) => {
+      toast.success(status === "draft" ? "Đã lưu nháp" : "Đã giao bài tập");
       setForm({ title: "", description: "", type: "offline", dueDate: "", maxScore: 10 });
       qc.invalidateQueries({ queryKey: ["assignments", classId] });
     },
@@ -83,6 +84,24 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
       qc.invalidateQueries({ queryKey: ["assignments", classId] });
     },
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể xoá bài tập"),
+  });
+
+  const publishAssignment = useMutation({
+    mutationFn: (assignmentId: string) => api.assignments.publish(assignmentId),
+    onSuccess: () => {
+      toast.success("Đã xuất bản bài tập");
+      qc.invalidateQueries({ queryKey: ["assignments", classId] });
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể xuất bản bài tập"),
+  });
+
+  const closeAssignment = useMutation({
+    mutationFn: (assignmentId: string) => api.assignments.close(assignmentId),
+    onSuccess: () => {
+      toast.success("Đã đóng bài tập");
+      qc.invalidateQueries({ queryKey: ["assignments", classId] });
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể đóng bài tập"),
   });
 
   const [studentForm, setStudentForm] = useState({ email: "", fullName: "" });
@@ -142,7 +161,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
         <form
           onSubmit={(e: FormEvent) => {
             e.preventDefault();
-            createAssignment.mutate();
+            createAssignment.mutate("assigned");
           }}
           className="flex flex-col gap-3"
         >
@@ -166,9 +185,22 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
               <Input type="number" min={0} max={100} required value={form.maxScore} onChange={(e) => setForm({ ...form, maxScore: Number(e.target.value) })} />
             </Field>
           </div>
-          <Button type="submit" variant="secondary" loading={createAssignment.isPending} className="self-start">
-            <PlusCircle className="h-4 w-4" /> Giao bài
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" variant="secondary" loading={createAssignment.isPending && createAssignment.variables === "assigned"}>
+              <PlusCircle className="h-4 w-4" /> Giao bài
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              loading={createAssignment.isPending && createAssignment.variables === "draft"}
+              onClick={(e) => {
+                const formEl = e.currentTarget.closest("form");
+                if (formEl?.reportValidity()) createAssignment.mutate("draft");
+              }}
+            >
+              Lưu nháp
+            </Button>
+          </div>
         </form>
       </Card>
 
@@ -254,12 +286,40 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
                           <TypeIcon className="h-5 w-5" strokeWidth={1.75} />
                         </span>
                         <div className="flex-1">
-                          <p className="font-display text-base font-medium text-ink">{a.title}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-display text-base font-medium text-ink">{a.title}</p>
+                            {a.status === "draft" && (
+                              <span className="rounded-full bg-role-student-soft px-2 py-0.5 text-xs font-medium text-role-student">Nháp</span>
+                            )}
+                            {a.status === "closed" && (
+                              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-muted">Đã đóng</span>
+                            )}
+                          </div>
                           <p className="text-sm text-ink-muted">
                             {a.type === "online" ? "Online" : "Offline"} · Hạn: {new Date(a.dueDate).toLocaleString("vi-VN")} · Tối đa {a.maxScore} điểm
                           </p>
                         </div>
                       </button>
+                      {a.status === "draft" && (
+                        <button
+                          type="button"
+                          onClick={() => publishAssignment.mutate(a._id)}
+                          className="rounded-md px-2 py-1 text-xs font-medium text-accent hover:bg-surface-2"
+                        >
+                          Xuất bản
+                        </button>
+                      )}
+                      {a.status === "assigned" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`Đóng bài tập "${a.title}"? Học sinh sẽ không nộp bài mới được nữa.`)) closeAssignment.mutate(a._id);
+                          }}
+                          className="rounded-md px-2 py-1 text-xs font-medium text-ink-muted hover:bg-surface-2"
+                        >
+                          Đóng bài
+                        </button>
+                      )}
                       <button
                         type="button"
                         title="Sửa bài tập"

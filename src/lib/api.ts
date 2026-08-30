@@ -127,6 +127,7 @@ export const api = {
         attachedMaterialIds?: string[];
         dueDate: string;
         maxScore: number;
+        status?: "draft" | "assigned";
       },
     ) => post<AssignmentDto>(`/classes/${classId}/assignments`, dto),
     get: (assignmentId: string) => get<AssignmentDto>(`/assignments/${assignmentId}`),
@@ -143,6 +144,8 @@ export const api = {
       }>,
     ) => patch<AssignmentDto>(`/assignments/${assignmentId}`, dto),
     remove: (assignmentId: string) => del<void>(`/assignments/${assignmentId}`),
+    publish: (assignmentId: string) => patch<AssignmentDto>(`/assignments/${assignmentId}/publish`),
+    close: (assignmentId: string) => patch<AssignmentDto>(`/assignments/${assignmentId}/close`),
   },
   uploads: {
     getSignature: () => post<UploadSignature>("/uploads/signature"),
