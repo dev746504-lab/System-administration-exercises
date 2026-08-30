@@ -72,6 +72,7 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
 const get = <T>(path: string) => request<T>(path);
 const post = <T>(path: string, body?: unknown) => request<T>(path, { method: "POST", body: JSON.stringify(body ?? {}) });
 const patch = <T>(path: string, body?: unknown) => request<T>(path, { method: "PATCH", body: JSON.stringify(body ?? {}) });
+const del = <T>(path: string) => request<T>(path, { method: "DELETE" });
 
 export interface LoginResponse {
   accessToken: string;
@@ -129,6 +130,19 @@ export const api = {
       },
     ) => post<AssignmentDto>(`/classes/${classId}/assignments`, dto),
     get: (assignmentId: string) => get<AssignmentDto>(`/assignments/${assignmentId}`),
+    update: (
+      assignmentId: string,
+      dto: Partial<{
+        title: string;
+        description: string;
+        type: "online" | "offline";
+        examId: string;
+        attachedMaterialIds: string[];
+        dueDate: string;
+        maxScore: number;
+      }>,
+    ) => patch<AssignmentDto>(`/assignments/${assignmentId}`, dto),
+    remove: (assignmentId: string) => del<void>(`/assignments/${assignmentId}`),
   },
   uploads: {
     getSignature: () => post<UploadSignature>("/uploads/signature"),

@@ -3,14 +3,21 @@
 import { use, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, ClipboardList, Laptop, NotebookPen, Paperclip, PlusCircle, UserPlus } from "lucide-react";
-import { api, ApiError, type SubmissionDto } from "@/lib/api";
+import { ChevronDown, ChevronRight, ClipboardList, Laptop, NotebookPen, Paperclip, Pencil, PlusCircle, Trash2, UserPlus } from "lucide-react";
+import { api, ApiError, type AssignmentDto, type SubmissionDto } from "@/lib/api";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
+
+/** ISO string -> giá trị cho <input type="datetime-local"> theo giờ địa phương. */
+function toDatetimeLocal(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const statusDot: Record<string, string> = {
   graded: "bg-accent",
@@ -43,6 +50,39 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
       qc.invalidateQueries({ queryKey: ["assignments", classId] });
     },
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể tạo bài tập"),
+  });
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ title: string; description: string; type: "online" | "offline"; dueDate: string; maxScore: number }>({
+    title: "",
+    description: "",
+    type: "offline",
+    dueDate: "",
+    maxScore: 10,
+  });
+
+  function startEdit(a: AssignmentDto) {
+    setEditingId(a._id);
+    setEditForm({ title: a.title, description: a.description ?? "", type: a.type, dueDate: toDatetimeLocal(a.dueDate), maxScore: a.maxScore });
+  }
+
+  const updateAssignment = useMutation({
+    mutationFn: () => api.assignments.update(editingId!, { ...editForm, dueDate: new Date(editForm.dueDate).toISOString() }),
+    onSuccess: () => {
+      toast.success("Đã lưu thay đổi");
+      setEditingId(null);
+      qc.invalidateQueries({ queryKey: ["assignments", classId] });
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể sửa bài tập"),
+  });
+
+  const deleteAssignment = useMutation({
+    mutationFn: (assignmentId: string) => api.assignments.remove(assignmentId),
+    onSuccess: () => {
+      toast.success("Đã xoá bài tập");
+      qc.invalidateQueries({ queryKey: ["assignments", classId] });
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể xoá bài tập"),
   });
 
   const [studentForm, setStudentForm] = useState({ email: "", fullName: "" });
@@ -151,26 +191,99 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
               const TypeIcon = a.type === "online" ? Laptop : NotebookPen;
               return (
                 <StaggerItem key={a._id} hoverLift className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-                  <button
-                    onClick={() => setExpanded(expanded === a._id ? null : a._id)}
-                    className="flex w-full items-center gap-4 px-5 py-4 text-left"
-                  >
-                    <span
-                      className={`flex h-10 w-10 flex-none items-center justify-center rounded-full ${
-                        a.type === "online" ? "bg-role-admin-soft text-role-admin" : "bg-role-student-soft text-role-student"
-                      }`}
+                  {editingId === a._id ? (
+                    <form
+                      onSubmit={(e: FormEvent) => {
+                        e.preventDefault();
+                        updateAssignment.mutate();
+                      }}
+                      className="flex flex-col gap-3 px-5 py-4"
                     >
-                      <TypeIcon className="h-5 w-5" strokeWidth={1.75} />
-                    </span>
-                    <div className="flex-1">
-                      <p className="font-display text-base font-medium text-ink">{a.title}</p>
-                      <p className="text-sm text-ink-muted">
-                        {a.type === "online" ? "Online" : "Offline"} · Hạn: {new Date(a.dueDate).toLocaleString("vi-VN")} · Tối đa {a.maxScore} điểm
-                      </p>
+                      <Field label="Tiêu đề">
+                        <Input required value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+                      </Field>
+                      <Field label="Mô tả">
+                        <Textarea rows={2} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+                      </Field>
+                      <div className="grid grid-cols-3 gap-3">
+                        <Field label="Hình thức">
+                          <Select value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value as "online" | "offline" })}>
+                            <option value="offline">Offline (chấm tay)</option>
+                            <option value="online">Online</option>
+                          </Select>
+                        </Field>
+                        <Field label="Hạn nộp">
+                          <Input
+                            type="datetime-local"
+                            required
+                            value={editForm.dueDate}
+                            onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
+                          />
+                        </Field>
+                        <Field label="Điểm tối đa">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            required
+                            value={editForm.maxScore}
+                            onChange={(e) => setEditForm({ ...editForm, maxScore: Number(e.target.value) })}
+                          />
+                        </Field>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="submit" variant="secondary" loading={updateAssignment.isPending}>
+                          Lưu
+                        </Button>
+                        <Button type="button" variant="ghost" onClick={() => setEditingId(null)}>
+                          Huỷ
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="flex w-full items-center gap-2 px-5 py-4">
+                      <button
+                        onClick={() => setExpanded(expanded === a._id ? null : a._id)}
+                        className="flex flex-1 items-center gap-4 text-left"
+                      >
+                        <span
+                          className={`flex h-10 w-10 flex-none items-center justify-center rounded-full ${
+                            a.type === "online" ? "bg-role-admin-soft text-role-admin" : "bg-role-student-soft text-role-student"
+                          }`}
+                        >
+                          <TypeIcon className="h-5 w-5" strokeWidth={1.75} />
+                        </span>
+                        <div className="flex-1">
+                          <p className="font-display text-base font-medium text-ink">{a.title}</p>
+                          <p className="text-sm text-ink-muted">
+                            {a.type === "online" ? "Online" : "Offline"} · Hạn: {new Date(a.dueDate).toLocaleString("vi-VN")} · Tối đa {a.maxScore} điểm
+                          </p>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        title="Sửa bài tập"
+                        onClick={() => startEdit(a)}
+                        className="rounded-md p-2 text-ink-muted hover:bg-surface-2 hover:text-ink"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Xoá bài tập"
+                        onClick={() => {
+                          if (window.confirm(`Xoá bài tập "${a.title}"?`)) deleteAssignment.mutate(a._id);
+                        }}
+                        className="rounded-md p-2 text-ink-muted hover:bg-surface-2 hover:text-danger"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => setExpanded(expanded === a._id ? null : a._id)} className="rounded-md p-2">
+                        {expanded === a._id ? <ChevronDown className="h-5 w-5 text-ink-muted" /> : <ChevronRight className="h-5 w-5 text-ink-muted" />}
+                      </button>
                     </div>
-                    {expanded === a._id ? <ChevronDown className="h-5 w-5 text-ink-muted" /> : <ChevronRight className="h-5 w-5 text-ink-muted" />}
-                  </button>
-                  {expanded === a._id && <SubmissionsPanel assignmentId={a._id} />}
+                  )}
+                  {editingId !== a._id && expanded === a._id && <SubmissionsPanel assignmentId={a._id} />}
                 </StaggerItem>
               );
             })}
