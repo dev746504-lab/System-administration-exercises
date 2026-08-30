@@ -52,8 +52,17 @@ export default function TeacherPage() {
 
   const addMember = useMutation({
     mutationFn: () => api.institutions.addMember(institutionId, memberForm),
-    onSuccess: () => {
-      toast.success("Đã thêm thành viên");
+    onSuccess: (res) => {
+      // tempPassword chỉ có khi vừa tạo tài khoản mới (chưa có luồng mời qua
+      // email) - hiện lâu hơn bình thường để giáo viên kịp copy gửi lại.
+      if (res.tempPassword) {
+        toast.success(`Đã thêm thành viên. Mật khẩu tạm: ${res.tempPassword}`, {
+          description: "Gửi mật khẩu này cho thành viên để họ đăng nhập lần đầu.",
+          duration: 20000,
+        });
+      } else {
+        toast.success("Đã thêm thành viên");
+      }
       setMemberForm({ email: "", fullName: "", role: "student" });
       qc.invalidateQueries({ queryKey: ["members", institutionId] });
     },

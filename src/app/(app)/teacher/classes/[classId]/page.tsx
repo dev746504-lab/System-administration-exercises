@@ -145,8 +145,11 @@ function SubmissionsPanel({ assignmentId }: { assignmentId: string }) {
     queryFn: () => api.submissions.listForAssignment(assignmentId),
   });
 
+  // Chấm theo (assignmentId, studentId) thay vì submissionId - dùng chung được
+  // cho cả bài online đã có Submission lẫn bài offline chưa từng có bản ghi nào.
   const grade = useMutation({
-    mutationFn: ({ id, score, feedback }: { id: string; score: number; feedback?: string }) => api.submissions.grade(id, { score, feedback }),
+    mutationFn: ({ studentId, score, feedback }: { studentId: string; score: number; feedback?: string }) =>
+      api.submissions.gradeDirect(assignmentId, studentId, { score, feedback }),
     onSuccess: () => {
       toast.success("Đã chấm điểm");
       qc.invalidateQueries({ queryKey: ["submissions", assignmentId] });
@@ -161,12 +164,17 @@ function SubmissionsPanel({ assignmentId }: { assignmentId: string }) {
         <Skeleton className="h-9 w-full" />
       </div>
     );
-  if (!submissions?.length) return <p className="border-t border-border px-5 py-4 text-sm text-ink-muted">Chưa có học sinh nào nộp bài.</p>;
+  if (!submissions?.length) return <p className="border-t border-border px-5 py-4 text-sm text-ink-muted">Lớp chưa có học sinh nào.</p>;
 
   return (
     <div className="flex flex-col gap-2 border-t border-border px-5 py-4">
       {submissions.map((s) => (
-        <SubmissionRow key={s._id} submission={s} onGrade={(score, feedback) => grade.mutate({ id: s._id, score, feedback })} pending={grade.isPending} />
+        <SubmissionRow
+          key={s.studentId._id}
+          submission={s}
+          onGrade={(score, feedback) => grade.mutate({ studentId: s.studentId._id, score, feedback })}
+          pending={grade.isPending}
+        />
       ))}
     </div>
   );

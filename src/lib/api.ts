@@ -93,7 +93,7 @@ export const api = {
     suspend: (id: string) => patch(`/institutions/${id}/suspend`),
     listMembers: (institutionId: string) => get<MembershipDto[]>(`/institutions/${institutionId}/members`),
     addMember: (institutionId: string, dto: { email: string; fullName: string; role: string }) =>
-      post(`/institutions/${institutionId}/members`, dto),
+      post<{ userId: string; email: string; role: string; tempPassword?: string }>(`/institutions/${institutionId}/members`, dto),
   },
   classes: {
     list: (institutionId: string) => get<ClassDto[]>(`/institutions/${institutionId}/classes`),
@@ -133,6 +133,9 @@ export const api = {
     listForAssignment: (assignmentId: string) => get<SubmissionDto[]>(`/assignments/${assignmentId}/submissions`),
     findMine: (assignmentId: string) => get<SubmissionDto | null>(`/assignments/${assignmentId}/my-submission`),
     grade: (submissionId: string, dto: { score: number; feedback?: string }) => patch(`/submissions/${submissionId}/grade`, dto),
+    /** Chấm điểm theo (assignmentId, studentId), không cần Submission có sẵn - dùng cho bài offline. */
+    gradeDirect: (assignmentId: string, studentId: string, dto: { score: number; feedback?: string }) =>
+      patch(`/assignments/${assignmentId}/students/${studentId}/grade`, dto),
   },
   notifications: {
     list: () => get<NotificationDto[]>("/notifications"),
@@ -206,7 +209,8 @@ export interface AssignmentDto {
 }
 
 export interface SubmissionDto {
-  _id: string;
+  /** null = học sinh chưa có bản ghi nộp bài (hàng roster ghép từ danh sách lớp, chưa từng nộp/được chấm). */
+  _id: string | null;
   studentId: { _id: string; fullName: string; email: string };
   status: string;
   score?: number;
