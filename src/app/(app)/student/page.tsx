@@ -15,11 +15,7 @@ import { Reveal, StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 
 export default function StudentPage() {
   const { user } = useAuthStore();
-  const { data: classes, isLoading } = useQuery({
-    queryKey: ["classes", user?.institutionId, "student"],
-    queryFn: () => api.classes.list(user!.institutionId!),
-    enabled: !!user?.institutionId,
-  });
+  const { data: classes, isLoading } = useQuery({ queryKey: ["classes", "student"], queryFn: api.classes.list });
   const { data: progress } = useQuery({
     queryKey: ["progress", user?.id],
     queryFn: () => api.reports.forStudent(user!.id),

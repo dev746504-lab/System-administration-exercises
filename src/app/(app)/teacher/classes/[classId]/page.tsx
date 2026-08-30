@@ -3,7 +3,7 @@
 import { use, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, ClipboardList, Laptop, NotebookPen, PlusCircle } from "lucide-react";
+import { ChevronDown, ChevronRight, ClipboardList, Laptop, NotebookPen, PlusCircle, UserPlus } from "lucide-react";
 import { api, ApiError, type SubmissionDto } from "@/lib/api";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -45,12 +45,55 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể tạo bài tập"),
   });
 
+  const [studentForm, setStudentForm] = useState({ email: "", fullName: "" });
+  const addStudent = useMutation({
+    mutationFn: () => api.classes.addMember(classId, { ...studentForm, role: "student" as const }),
+    onSuccess: (res) => {
+      // tempPassword chỉ có khi vừa tạo tài khoản mới (chưa có luồng mời qua
+      // email) - hiện lâu hơn bình thường để giáo viên kịp copy gửi lại.
+      if (res.tempPassword) {
+        toast.success(`Đã thêm học sinh. Mật khẩu tạm: ${res.tempPassword}`, {
+          description: "Gửi mật khẩu này cho học sinh để họ đăng nhập lần đầu.",
+          duration: 20000,
+        });
+      } else {
+        toast.success("Đã thêm học sinh vào lớp");
+      }
+      setStudentForm({ email: "", fullName: "" });
+      qc.invalidateQueries({ queryKey: ["submissions"] });
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể thêm học sinh"),
+  });
+
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink">{klass?.name ?? "Lớp học"}</h1>
         <p className="text-sm text-ink-muted">{klass?.subject} · {klass?.academicYear}</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Thêm học sinh</CardTitle>
+        </CardHeader>
+        <form
+          onSubmit={(e: FormEvent) => {
+            e.preventDefault();
+            addStudent.mutate();
+          }}
+          className="grid gap-3 sm:grid-cols-2"
+        >
+          <Field label="Họ tên">
+            <Input required value={studentForm.fullName} onChange={(e) => setStudentForm({ ...studentForm, fullName: e.target.value })} />
+          </Field>
+          <Field label="Email">
+            <Input type="email" required value={studentForm.email} onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })} />
+          </Field>
+          <Button type="submit" variant="secondary" loading={addStudent.isPending} className="self-start sm:col-span-2">
+            <UserPlus className="h-4 w-4" /> Thêm học sinh
+          </Button>
+        </form>
+      </Card>
 
       <Card>
         <CardHeader>

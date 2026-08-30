@@ -10,10 +10,6 @@ import { RoleBadge } from "@/components/ui/role-badge";
 import { api } from "@/lib/api";
 
 const NAV: Record<string, { href: string; label: string; icon: typeof LayoutDashboard }[]> = {
-  system_admin: [
-    { href: "/admin", label: "Duyệt CSGD", icon: ShieldCheck },
-    { href: "/notifications", label: "Thông báo", icon: Bell },
-  ],
   teacher: [
     { href: "/teacher", label: "Tổng quan", icon: LayoutDashboard },
     { href: "/materials", label: "Kho học liệu", icon: BookOpen },
@@ -25,6 +21,8 @@ const NAV: Record<string, { href: string; label: string; icon: typeof LayoutDash
     { href: "/notifications", label: "Thông báo", icon: Bell },
   ],
 };
+
+const ADMIN_NAV_ITEM = { href: "/admin", label: "Quản lý giáo viên", icon: ShieldCheck };
 
 export default function AppShellLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -44,7 +42,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
     );
   }
 
-  const items = NAV[user.role] ?? [];
+  const items = user.isAdmin ? [...(NAV[user.role] ?? []), ADMIN_NAV_ITEM] : (NAV[user.role] ?? []);
 
   async function logout() {
     await api.auth.logout().catch(() => {});
@@ -94,7 +92,14 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-ink">{user.fullName}</p>
-              <RoleBadge role={user.role} />
+              <div className="flex items-center gap-1">
+                <RoleBadge role={user.role} />
+                {user.isAdmin && (
+                  <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-semibold text-ink-muted">
+                    Admin
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button

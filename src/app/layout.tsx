@@ -22,7 +22,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "Nền tảng LMS",
-  description: "Quản lý học tập cho CSGD, giáo viên và học sinh",
+  description: "Quản lý học tập cho giáo viên và học sinh",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

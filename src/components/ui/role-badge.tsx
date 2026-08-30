@@ -2,13 +2,11 @@ import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/auth-store";
 
 const styles: Record<Role, string> = {
-  system_admin: "bg-surface-2 text-ink-muted",
   teacher: "bg-role-teacher-soft text-role-teacher",
   student: "bg-role-student-soft text-role-student",
 };
 
 const labels: Record<Role, string> = {
-  system_admin: "Hệ thống",
   teacher: "Giáo viên",
   student: "Học sinh",
 };

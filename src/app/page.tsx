@@ -24,14 +24,11 @@ export default function Home() {
             <span className="font-display text-lg font-semibold">Nền tảng LMS</span>
           </div>
           <nav className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-ink hover:text-accent-strong">
-              Đăng nhập
-            </Link>
             <Link
-              href="/register"
+              href="/login"
               className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-all duration-150 hover:bg-accent-strong active:scale-[0.98]"
             >
-              Đăng ký cơ sở giáo dục
+              Đăng nhập
             </Link>
           </nav>
         </header>
@@ -50,14 +47,8 @@ export default function Home() {
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  href="/register"
-                  className="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:bg-accent-strong active:scale-[0.98]"
-                >
-                  Đăng ký cơ sở giáo dục
-                </Link>
-                <Link
                   href="/login"
-                  className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-ink transition-all duration-150 hover:bg-surface-2 active:scale-[0.98]"
+                  className="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:bg-accent-strong active:scale-[0.98]"
                 >
                   Đăng nhập
                 </Link>
@@ -74,7 +65,7 @@ export default function Home() {
               </span>
               <h3 className="mt-4 font-display text-xl font-medium text-ink">Kho học liệu số</h3>
               <p className="mt-2 max-w-sm text-sm text-ink-muted">
-                Xây dựng học liệu cá nhân, chia sẻ theo lớp hoặc đưa lên kho chung để cả cơ sở cùng khai thác.
+                Xây dựng học liệu cá nhân, chia sẻ theo lớp hoặc đưa lên kho chung để cả hệ thống cùng khai thác.
               </p>
             </StaggerItem>
 
@@ -106,7 +97,7 @@ export default function Home() {
                 role: "Giáo viên",
                 icon: GraduationCap,
                 accent: "role-teacher" as const,
-                text: "Toàn quyền quản lý CSGD: lớp học, thành viên, kho học liệu chung, thông báo - cùng với giao bài, chấm bài hằng ngày.",
+                text: "Tạo và quản lý lớp học của mình: thêm học sinh, kho học liệu, thông báo - cùng với giao bài, chấm bài hằng ngày.",
               },
               {
                 role: "Học sinh",

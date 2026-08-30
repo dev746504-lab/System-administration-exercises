@@ -13,7 +13,7 @@ import { Field, Input, Select } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 
-const visibilityLabel: Record<string, string> = { private: "Cá nhân", class: "Chia sẻ lớp", institution: "Toàn CSGD" };
+const visibilityLabel: Record<string, string> = { private: "Cá nhân", class: "Chia sẻ lớp", system: "Toàn hệ thống" };
 const typeLabel: Record<string, string> = { video: "Video", document: "Tài liệu", image: "Hình ảnh", audio: "Âm thanh", interactive: "Tương tác" };
 const typeChip: Record<string, { icon: typeof FileText; soft: string; text: string }> = {
   document: { icon: FileText, soft: "bg-accent-soft", text: "text-accent-strong" },
@@ -28,28 +28,24 @@ export default function MaterialsPage() {
   const qc = useQueryClient();
   const canUpload = user?.role === "teacher";
 
-  const { data: materials, isLoading } = useQuery({
-    queryKey: ["materials", user?.institutionId],
-    queryFn: () => api.materials.list(user!.institutionId!),
-    enabled: !!user?.institutionId,
-  });
+  const { data: materials, isLoading } = useQuery({ queryKey: ["materials"], queryFn: api.materials.list });
 
   const [form, setForm] = useState({ title: "", type: "document", fileUrl: "", subject: "" });
   const create = useMutation({
-    mutationFn: () => api.materials.create(user!.institutionId!, form),
+    mutationFn: () => api.materials.create(form),
     onSuccess: () => {
       toast.success("Đã thêm học liệu");
       setForm({ title: "", type: "document", fileUrl: "", subject: "" });
-      qc.invalidateQueries({ queryKey: ["materials", user?.institutionId] });
+      qc.invalidateQueries({ queryKey: ["materials"] });
     },
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Không thể thêm học liệu"),
   });
 
   const share = useMutation({
-    mutationFn: (materialId: string) => api.materials.share(user!.institutionId!, materialId, { visibility: "institution" }),
+    mutationFn: (materialId: string) => api.materials.share(materialId, { visibility: "system" }),
     onSuccess: () => {
-      toast.success("Đã gửi yêu cầu chia sẻ lên kho chung, chờ CSGD duyệt");
-      qc.invalidateQueries({ queryKey: ["materials", user?.institutionId] });
+      toast.success("Đã gửi yêu cầu chia sẻ lên kho chung, chờ quản trị viên duyệt");
+      qc.invalidateQueries({ queryKey: ["materials"] });
     },
   });
 
@@ -57,7 +53,7 @@ export default function MaterialsPage() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink">Kho học liệu số</h1>
-        <p className="text-sm text-ink-muted">Học liệu cá nhân, học liệu chia sẻ theo lớp và kho chung của CSGD.</p>
+        <p className="text-sm text-ink-muted">Học liệu cá nhân, học liệu chia sẻ theo lớp và kho chung của hệ thống.</p>
       </div>
 
       {canUpload && (
@@ -113,7 +109,7 @@ export default function MaterialsPage() {
         <StaggerGroup className="grid gap-3 sm:grid-cols-2">
           {materials.map((m) => (
             <StaggerItem key={m._id} hoverLift>
-              <MaterialCard material={m} canShare={canUpload} onShare={() => share.mutate(m._id)} sharing={share.isPending} institutionId={user!.institutionId!} />
+              <MaterialCard material={m} canShare={canUpload} onShare={() => share.mutate(m._id)} sharing={share.isPending} />
             </StaggerItem>
           ))}
         </StaggerGroup>
@@ -127,15 +123,13 @@ function MaterialCard({
   canShare,
   onShare,
   sharing,
-  institutionId,
 }: {
   material: MaterialDto;
   canShare: boolean;
   onShare: () => void;
   sharing: boolean;
-  institutionId: string;
 }) {
-  const recordDownload = useMutation({ mutationFn: () => api.materials.recordDownload(institutionId, material._id) });
+  const recordDownload = useMutation({ mutationFn: () => api.materials.recordDownload(material._id) });
   const chip = typeChip[material.type] ?? typeChip.document;
   const ChipIcon = chip.icon;
   return (
@@ -164,7 +158,7 @@ function MaterialCard({
         </a>
         {canShare && material.visibility === "private" && (
           <Button variant="ghost" onClick={onShare} loading={sharing} className="ml-auto text-xs">
-            <Share2 className="h-3.5 w-3.5" /> Chia sẻ lên CSGD
+            <Share2 className="h-3.5 w-3.5" /> Chia sẻ lên hệ thống
           </Button>
         )}
       </div>

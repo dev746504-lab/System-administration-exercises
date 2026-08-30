@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { GraduationCap } from "lucide-react";
@@ -65,13 +64,6 @@ export default function LoginPage() {
             Đăng nhập
           </Button>
         </form>
-
-        <p className="mt-6 text-center text-sm text-ink-muted">
-          Chưa có tài khoản?{" "}
-          <Link href="/register" className="font-medium text-accent-strong hover:underline">
-            Đăng ký CSGD
-          </Link>
-        </p>
       </motion.div>
     </div>
   );

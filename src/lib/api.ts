@@ -77,39 +77,41 @@ export interface LoginResponse {
   user: SessionUser;
 }
 
+export interface AddMemberResponse {
+  userId: string;
+  email: string;
+  role: string;
+  /** Chỉ có khi vừa tạo tài khoản mới - hiển thị một lần cho người thêm gửi lại. */
+  tempPassword?: string;
+}
+
 export const api = {
   auth: {
     login: (email: string, password: string) => post<LoginResponse>("/auth/login", { email, password }),
-    registerInstitution: (dto: { fullName: string; email: string; password: string; institutionName: string; institutionCode: string }) =>
-      post<{ message: string; userId: string; institutionId: string }>("/auth/register-institution", dto),
     logout: () => post<{ message: string }>("/auth/logout"),
     /** Gọi một lần khi app khởi động để khôi phục phiên từ refresh cookie, nếu có. */
     bootstrap: () => refreshSession(),
   },
-  institutions: {
-    get: (id: string) => get<InstitutionDto>(`/institutions/${id}`),
-    listPending: () => get<InstitutionDto[]>("/institutions/pending"),
-    approve: (id: string) => patch(`/institutions/${id}/approve`),
-    suspend: (id: string) => patch(`/institutions/${id}/suspend`),
-    listMembers: (institutionId: string) => get<MembershipDto[]>(`/institutions/${institutionId}/members`),
-    addMember: (institutionId: string, dto: { email: string; fullName: string; role: string }) =>
-      post<{ userId: string; email: string; role: string; tempPassword?: string }>(`/institutions/${institutionId}/members`, dto),
+  admin: {
+    createTeacher: (dto: { email: string; fullName: string }) => post<AddMemberResponse>("/admin/teachers", dto),
+    listTeachers: () => get<TeacherDto[]>("/admin/teachers"),
+    listAllClasses: () => get<ClassDto[]>("/admin/classes"),
+    listPendingMaterials: () => get<MaterialDto[]>("/admin/materials/pending"),
+    moderateMaterial: (materialId: string, approve: boolean) => patch(`/admin/materials/${materialId}/moderate?approve=${approve}`),
   },
   classes: {
-    list: (institutionId: string) => get<ClassDto[]>(`/institutions/${institutionId}/classes`),
-    create: (institutionId: string, dto: { name: string; subject?: string; gradeLevel?: string; academicYear: string }) =>
-      post<ClassDto>(`/institutions/${institutionId}/classes`, dto),
+    list: () => get<ClassDto[]>("/classes"),
+    create: (dto: { name: string; subject?: string; gradeLevel?: string; academicYear: string }) => post<ClassDto>("/classes", dto),
     get: (classId: string) => get<ClassDto>(`/classes/${classId}`),
     listMembers: (classId: string) => get<ClassMemberDto[]>(`/classes/${classId}/members`),
-    addMember: (classId: string, dto: { userId: string; role: "teacher" | "student" }) => post(`/classes/${classId}/members`, dto),
+    addMember: (classId: string, dto: { email: string; fullName: string; role: "teacher" | "student" }) =>
+      post<AddMemberResponse>(`/classes/${classId}/members`, dto),
   },
   materials: {
-    list: (institutionId: string) => get<MaterialDto[]>(`/institutions/${institutionId}/materials`),
-    create: (institutionId: string, dto: Partial<MaterialDto> & { title: string; type: string; fileUrl: string }) =>
-      post<MaterialDto>(`/institutions/${institutionId}/materials`, dto),
-    share: (institutionId: string, materialId: string, dto: { visibility: "class" | "institution"; classIds?: string[] }) =>
-      patch(`/institutions/${institutionId}/materials/${materialId}/share`, dto),
-    recordDownload: (institutionId: string, materialId: string) => patch(`/institutions/${institutionId}/materials/${materialId}/download`),
+    list: () => get<MaterialDto[]>("/materials"),
+    create: (dto: Partial<MaterialDto> & { title: string; type: string; fileUrl: string }) => post<MaterialDto>("/materials", dto),
+    share: (materialId: string, dto: { visibility: "class" | "system"; classIds?: string[] }) => patch(`/materials/${materialId}/share`, dto),
+    recordDownload: (materialId: string) => patch(`/materials/${materialId}/download`),
   },
   assignments: {
     listForClass: (classId: string) => get<AssignmentDto[]>(`/classes/${classId}/assignments`),
@@ -148,25 +150,15 @@ export const api = {
     forClass: (classId: string) => get<ProgressDto[]>(`/classes/${classId}/progress`),
   },
   questions: {
-    search: (institutionId: string, subject?: string) => get<QuestionDto[]>(`/institutions/${institutionId}/questions${subject ? `?subject=${subject}` : ""}`),
-    create: (institutionId: string, dto: Partial<QuestionDto> & { type: string; content: string }) =>
-      post<QuestionDto>(`/institutions/${institutionId}/questions`, dto),
+    search: (subject?: string) => get<QuestionDto[]>(`/questions${subject ? `?subject=${subject}` : ""}`),
+    create: (dto: Partial<QuestionDto> & { type: string; content: string }) => post<QuestionDto>("/questions", dto),
   },
 };
 
-export interface InstitutionDto {
+export interface TeacherDto {
   _id: string;
-  name: string;
-  code: string;
-  status: "pending" | "active" | "suspended";
-  plan: string;
-}
-
-export interface MembershipDto {
-  _id: string;
-  userId: { _id: string; fullName: string; email: string };
-  role: string;
-  status: string;
+  email: string;
+  fullName: string;
 }
 
 export interface ClassDto {
@@ -176,6 +168,8 @@ export interface ClassDto {
   gradeLevel?: string;
   academicYear: string;
   status: string;
+  /** Chỉ có khi đến từ /admin/classes (populate). */
+  teacherId?: string | { _id: string; fullName: string; email: string };
 }
 
 export interface ClassMemberDto {
@@ -188,7 +182,7 @@ export interface MaterialDto {
   _id: string;
   title: string;
   type: string;
-  visibility: "private" | "class" | "institution";
+  visibility: "private" | "class" | "system";
   subject?: string;
   gradeLevel?: string;
   tags: string[];

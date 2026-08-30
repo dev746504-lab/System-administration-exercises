@@ -1,13 +1,14 @@
 import { create } from "zustand";
 
-export type Role = "system_admin" | "teacher" | "student";
+export type Role = "teacher" | "student";
 
 export interface SessionUser {
   id: string;
   email: string;
   fullName: string;
   role: Role;
-  institutionId: string | null;
+  /** True for exactly one seeded account — highest authority, on top of an otherwise ordinary teacher role. */
+  isAdmin: boolean;
 }
 
 interface AuthState {
@@ -35,13 +36,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 }));
 
 export const roleLabel: Record<Role, string> = {
-  system_admin: "Quản trị hệ thống",
   teacher: "Giáo viên",
   student: "Học sinh",
 };
 
 export const roleHome: Record<Role, string> = {
-  system_admin: "/admin",
   teacher: "/teacher",
   student: "/student",
 };

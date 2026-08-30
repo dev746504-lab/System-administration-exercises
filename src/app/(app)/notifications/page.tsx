@@ -27,12 +27,13 @@ export default function NotificationsPage() {
   const { data: notifications, isLoading } = useQuery({ queryKey: ["notifications"], queryFn: api.notifications.list });
   const canSend = user?.role === "teacher";
   const { data: classes } = useQuery({
-    queryKey: ["classes", user?.institutionId, "notify"],
-    queryFn: () => api.classes.list(user!.institutionId!),
-    enabled: canSend && !!user?.institutionId,
+    queryKey: ["classes", "notify"],
+    queryFn: api.classes.list,
+    enabled: canSend,
   });
 
-  const [form, setForm] = useState({ scope: "institution", title: "", content: "", classId: "" });
+  // Giáo viên thường chỉ gửi được theo lớp mình dạy; "Toàn hệ thống" chỉ admin gửi được.
+  const [form, setForm] = useState({ scope: "class", title: "", content: "", classId: "" });
   const send = useMutation({
     mutationFn: () => api.notifications.send(form.scope === "class" ? form : { scope: form.scope, title: form.title, content: form.content }),
     onSuccess: () => {
@@ -68,12 +69,16 @@ export default function NotificationsPage() {
             className="flex flex-col gap-3"
           >
             <div className="grid grid-cols-[140px_1fr] gap-3">
-              <Field label="Phạm vi">
-                <Select value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })}>
-                  <option value="institution">Toàn CSGD</option>
-                  <option value="class">Theo lớp</option>
-                </Select>
-              </Field>
+              {user?.isAdmin ? (
+                <Field label="Phạm vi">
+                  <Select value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })}>
+                    <option value="system">Toàn hệ thống</option>
+                    <option value="class">Theo lớp</option>
+                  </Select>
+                </Field>
+              ) : (
+                <div />
+              )}
               {form.scope === "class" ? (
                 <Field label="Lớp">
                   <Select required value={form.classId} onChange={(e) => setForm({ ...form, classId: e.target.value })}>
