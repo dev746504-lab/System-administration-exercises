@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { BookOpen, Check, GraduationCap, UserPlus, Users2, X } from "lucide-react";
+import { BookOpen, Check, ChevronRight, GraduationCap, UserPlus, Users2, X } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -98,6 +99,7 @@ export default function AdminPage() {
 
       <div>
         <h2 className="mb-3 font-display text-lg font-medium text-ink">Toàn bộ lớp học</h2>
+        <p className="mb-3 text-sm text-ink-muted">Bấm vào một lớp để quản lý y hệt giáo viên phụ trách - thêm học sinh, giao bài, chấm điểm.</p>
         {classesLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : !classes?.length ? (
@@ -107,14 +109,22 @@ export default function AdminPage() {
             {classes.map((c) => {
               const teacher = typeof c.teacherId === "object" ? c.teacherId : null;
               return (
-                <StaggerItem key={c._id} className="flex items-center justify-between rounded-xl border border-border bg-surface px-5 py-4 shadow-sm">
-                  <div>
-                    <p className="font-display text-base font-medium text-ink">{c.name}</p>
-                    <p className="text-sm text-ink-muted">
-                      {c.subject ?? "-"} · {c.academicYear}
-                    </p>
-                  </div>
-                  <span className="text-sm text-ink-muted">{teacher?.fullName ?? "-"}</span>
+                <StaggerItem key={c._id} hoverLift>
+                  <Link
+                    href={`/teacher/classes/${c._id}`}
+                    className="flex items-center gap-4 rounded-xl border border-border bg-surface px-5 py-4 shadow-sm transition-all duration-150 hover:border-accent hover:shadow-md active:scale-[0.99]"
+                  >
+                    <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-role-teacher-soft text-role-teacher">
+                      <GraduationCap className="h-5 w-5" strokeWidth={1.75} />
+                    </span>
+                    <div className="flex-1">
+                      <p className="font-display text-base font-medium text-ink">{c.name}</p>
+                      <p className="text-sm text-ink-muted">
+                        {c.subject ?? "-"} · {c.academicYear} · GV: {teacher?.fullName ?? "-"}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-ink-muted" />
+                  </Link>
                 </StaggerItem>
               );
             })}
