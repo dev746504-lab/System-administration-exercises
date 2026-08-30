@@ -210,6 +210,9 @@ export interface SubmissionDto {
   score?: number;
   feedback?: string;
   submittedAt?: string;
+  /** Bài làm dạng văn bản học sinh nộp cho bài "Online" - không có với bài "Offline". */
+  textContent?: string;
+  fileUrls?: string[];
 }
 
 export interface NotificationDto {

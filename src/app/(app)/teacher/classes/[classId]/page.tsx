@@ -236,24 +236,32 @@ function SubmissionRow({
   const [feedback, setFeedback] = useState(submission.feedback ?? "");
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-2 px-3 py-2">
-      <div className="min-w-[140px] flex-1">
-        <p className="text-sm font-medium text-ink">{submission.studentId.fullName}</p>
-        <p className="flex items-center gap-1.5 text-xs text-ink-muted">
-          <span className={`h-1.5 w-1.5 rounded-full ${statusDot[submission.status] ?? statusDot.not_submitted}`} />
-          {submission.status === "graded" ? "Đã chấm" : submission.status === "late" ? "Nộp muộn" : submission.status === "submitted" ? "Đã nộp" : "Chưa nộp"}
-        </p>
+    <div className="flex flex-col gap-2 rounded-lg bg-surface-2 px-3 py-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="min-w-[140px] flex-1">
+          <p className="text-sm font-medium text-ink">{submission.studentId.fullName}</p>
+          <p className="flex items-center gap-1.5 text-xs text-ink-muted">
+            <span className={`h-1.5 w-1.5 rounded-full ${statusDot[submission.status] ?? statusDot.not_submitted}`} />
+            {submission.status === "graded" ? "Đã chấm" : submission.status === "late" ? "Nộp muộn" : submission.status === "submitted" ? "Đã nộp" : "Chưa nộp"}
+          </p>
+        </div>
+        <Input type="number" min={0} max={100} className="w-20" placeholder="Điểm" value={score} onChange={(e) => setScore(e.target.value)} />
+        <Input className="w-56" placeholder="Nhận xét (tuỳ chọn)" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+        <Button
+          variant="secondary"
+          loading={pending}
+          onClick={() => score !== "" && onGrade(Number(score), feedback || undefined)}
+          disabled={score === ""}
+        >
+          Chấm
+        </Button>
       </div>
-      <Input type="number" min={0} max={100} className="w-20" placeholder="Điểm" value={score} onChange={(e) => setScore(e.target.value)} />
-      <Input className="w-56" placeholder="Nhận xét (tuỳ chọn)" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
-      <Button
-        variant="secondary"
-        loading={pending}
-        onClick={() => score !== "" && onGrade(Number(score), feedback || undefined)}
-        disabled={score === ""}
-      >
-        Chấm
-      </Button>
+      {submission.textContent && (
+        <p className="whitespace-pre-wrap rounded-md bg-surface px-3 py-2 text-sm text-ink">
+          <span className="font-medium text-ink-muted">Bài làm: </span>
+          {submission.textContent}
+        </p>
+      )}
     </div>
   );
 }
